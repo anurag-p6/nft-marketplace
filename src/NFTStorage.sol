@@ -14,7 +14,7 @@ contract NFTStorage is ERC721URIStorage, Ownable {
      }
 
      function mint(address _to, string memory _tokenURI) public returns (uint256) {
-      
+
         _safeMint(_to, tokenId);
         _setTokenURI(tokenId, _tokenURI);
         tokenId++;

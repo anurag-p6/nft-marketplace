@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {Script} from "forge-std/Script.sol";
 import {NFTStorage} from "../src/NFTStorage.sol";
 
-contract CounterScript is Script {
+contract NFTStorageScript is Script {
     NFTStorage public counter;
 
     function setUp() public {}
