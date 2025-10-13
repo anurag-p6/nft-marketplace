@@ -21,13 +21,13 @@ export default function NFTCard({ nft, showOwner = false }: NFTCardProps) {
 
   return (
     <Link href={`/nft/${tokenId}`}>
-      <div className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer">
+      <div className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-2xl hover:shadow-purple-200 transition-all duration-300 cursor-pointer border border-gray-200 hover:border-purple-300 animate-fade-in">
         {/* NFT Image */}
         <div className="relative aspect-square overflow-hidden bg-gray-100">
           <img
             src={imageUrl}
             alt={name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             onError={(e) => {
               // Fallback if image fails to load
               e.currentTarget.src = '/placeholder-nft.png';
@@ -35,14 +35,17 @@ export default function NFTCard({ nft, showOwner = false }: NFTCardProps) {
           />
 
           {/* Token ID Badge */}
-          <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+          <div className="absolute top-2 right-2 bg-purple-600 bg-opacity-90 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">
             #{tokenId}
           </div>
+
+          {/* Gradient Overlay on Hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </div>
 
         {/* NFT Details */}
         <div className="p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">
+          <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate group-hover:text-purple-600 transition-colors duration-300">
             {name}
           </h3>
 
@@ -56,13 +59,13 @@ export default function NFTCard({ nft, showOwner = false }: NFTCardProps) {
               {metadata.attributes.slice(0, 3).map((attr, index) => (
                 <span
                   key={index}
-                  className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded"
+                  className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-200"
                 >
                   {attr.trait_type}: {attr.value}
                 </span>
               ))}
               {metadata.attributes.length > 3 && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                <span className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded border border-gray-200">
                   +{metadata.attributes.length - 3} more
                 </span>
               )}
@@ -74,7 +77,7 @@ export default function NFTCard({ nft, showOwner = false }: NFTCardProps) {
             <div className="border-t border-gray-200 pt-3 mt-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Price</span>
-                <span className="text-lg font-bold text-blue-600">
+                <span className="text-lg font-bold text-purple-600 group-hover:text-purple-700 transition-colors duration-300">
                   ${listing.priceUSD.toFixed(2)}
                 </span>
               </div>
@@ -85,7 +88,7 @@ export default function NFTCard({ nft, showOwner = false }: NFTCardProps) {
           {showOwner && (
             <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
               <span className="font-medium">Owner:</span>
-              <span className="font-mono">{truncateAddress(owner)}</span>
+              <span className="font-mono text-gray-700">{truncateAddress(owner)}</span>
             </div>
           )}
         </div>

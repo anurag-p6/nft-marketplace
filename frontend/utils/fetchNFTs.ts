@@ -4,6 +4,7 @@ import { config } from '@/app/config/wagmi';
 import { contracts } from '@/config/contracts';
 import { NFTMetadata } from './ipfs';
 import { getTokenListing, ListingData } from './marketplace';
+import { sepolia } from 'wagmi/chains';
 
 export interface NFTData {
   tokenId: string;
@@ -48,6 +49,7 @@ export async function getBalance(owner: Address): Promise<bigint> {
       abi: contracts.nftStorage.abi,
       functionName: 'balanceOf',
       args: [owner],
+      chainId: sepolia.id,
     });
 
     return balance as bigint;
@@ -67,6 +69,7 @@ export async function getTotalMinted(): Promise<bigint> {
       abi: contracts.nftStorage.abi,
       functionName: 'getTotalMinted',
       args: [],
+      chainId: sepolia.id,
     });
 
     return total as bigint;
@@ -86,6 +89,7 @@ export async function getTokenOwner(tokenId: bigint): Promise<Address | null> {
       abi: contracts.nftStorage.abi,
       functionName: 'ownerOf',
       args: [tokenId],
+      chainId: sepolia.id,
     });
 
     return owner as Address;
@@ -105,6 +109,7 @@ export async function getTokenURI(tokenId: bigint): Promise<string | null> {
       abi: contracts.nftStorage.abi,
       functionName: 'tokenURI',
       args: [tokenId],
+      chainId: sepolia.id,
     });
 
     return uri as string;

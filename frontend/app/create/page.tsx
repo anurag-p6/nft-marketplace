@@ -180,7 +180,6 @@ export default function CreateNFTPage() {
       }
     } catch (error) {
       console.error('Error creating NFT:', error);
-      alert(error instanceof Error ? error.message : 'Failed to create NFT');
     } finally {
       setLoading(false);
       setLoadingMessage('');

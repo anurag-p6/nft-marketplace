@@ -174,35 +174,37 @@ export default function NFTDetailPage() {
               {/* Price Section */}
               {isListedForSale && (
                 <div className="border-t border-gray-200 pt-6 mt-6">
-                  <p className="text-sm text-gray-600 mb-2">Current Price</p>
-                  <p className="text-4xl font-bold text-blue-600 mb-1">
-                    ${nftData.listing.priceUSD.toFixed(2)}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {(Number(nftData.listing.price) / 1e18).toFixed(6)} ETH
-                  </p>
+                  <p className="text-sm text-gray-600 mb-2 font-medium">Current Price</p>
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6 mb-4">
+                    <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                      ${nftData.listing.priceUSD.toFixed(2)}
+                    </p>
+                    <p className="text-sm text-gray-600 font-medium">
+                      {(Number(nftData.listing.price) / 1e18).toFixed(6)} ETH
+                    </p>
+                  </div>
 
                   {!isOwner && isConnected && (
                     <button
                       onClick={handleBuyNFT}
                       disabled={buying}
-                      className="w-full mt-6 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                      className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                     >
                       {buying ? 'Processing...' : 'Buy Now'}
                     </button>
                   )}
 
                   {!isConnected && (
-                    <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                      <p className="text-sm text-yellow-800">
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                      <p className="text-sm text-amber-800 font-medium">
                         Please connect your wallet to purchase this NFT
                       </p>
                     </div>
                   )}
 
                   {isOwner && (
-                    <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
-                      <p className="text-sm text-green-800 font-medium">
+                    <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+                      <p className="text-sm text-emerald-800 font-medium">
                         You own this NFT
                       </p>
                     </div>

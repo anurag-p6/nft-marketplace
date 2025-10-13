@@ -2,6 +2,7 @@ import { Address, parseEther, formatEther } from 'viem';
 import { writeContract, waitForTransactionReceipt, readContract } from '@wagmi/core';
 import { config } from '@/app/config/wagmi';
 import { contracts } from '@/config/contracts';
+import { sepolia } from 'wagmi/chains';
 
 export interface ListingData {
   listingId: bigint;
@@ -109,6 +110,7 @@ export async function getListingById(listingId: bigint): Promise<ListingData | n
       abi: contracts.nftMarketplace.abi,
       functionName: 'getListing',
       args: [listingId],
+      chainId: sepolia.id,
     });
 
     if (!listing || !Array.isArray(listing) || listing.length < 5) {
@@ -151,6 +153,7 @@ export async function getTokenListing(nftContract: Address, tokenId: bigint): Pr
       abi: contracts.nftMarketplace.abi,
       functionName: 'tokenListings',
       args: [nftContract, tokenId],
+      chainId: sepolia.id,
     }) as bigint;
 
     if (!listingId || listingId === BigInt(0)) {
