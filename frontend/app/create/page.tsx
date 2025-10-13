@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { NFTMetadata, getIPFSUrl } from '@/utils/ipfs';
+import { mintNFT, approveNFT } from '@/utils/nft';
+import { listNFT } from '@/utils/marketplace';
+import { contracts } from '@/config/contracts';
 
 export default function CreateNFTPage() {
   const { address, isConnected } = useAccount();
@@ -15,8 +18,12 @@ export default function CreateNFTPage() {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [attributes, setAttributes] = useState<Array<{ trait_type: string; value: string }>>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [imageCID, setImageCID] = useState<string>('');
   const [metadataCID, setMetadataCID] = useState<string>('');
+  const [tokenId, setTokenId] = useState<string>('');
+  const [txHash, setTxHash] = useState<string>('');
+  const [listingId, setListingId] = useState<string>('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -102,7 +109,7 @@ export default function CreateNFTPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isConnected) {
+    if (!isConnected || !address) {
       alert('Please connect your wallet first');
       return;
     }
@@ -112,21 +119,71 @@ export default function CreateNFTPage() {
       return;
     }
 
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      alert('Please enter a valid price in USD');
+      return;
+    }
+
     setLoading(true);
+    setLoadingMessage('Uploading image to IPFS...');
 
     try {
+      // Step 1: Upload image to IPFS
       const uploadedImageCID = await uploadImage();
       setImageCID(uploadedImageCID);
+      console.log('[Create Page] Image CID:', uploadedImageCID);
 
+      // Step 2: Upload metadata to IPFS
+      setLoadingMessage('Uploading metadata to IPFS...');
       const uploadedMetadataCID = await uploadMetadata(uploadedImageCID);
       setMetadataCID(uploadedMetadataCID);
+      console.log('[Create Page] Metadata CID:', uploadedMetadataCID);
 
-      alert('NFT metadata uploaded to IPFS successfully!');
+      // Step 3: Mint NFT on-chain
+      setLoadingMessage('Minting NFT on blockchain...');
+      const tokenURI = getIPFSUrl(uploadedMetadataCID);
+
+      console.log('[Create Page] Minting NFT with params:', {
+        to: address,
+        tokenURI,
+      });
+
+      const mintResult = await mintNFT({
+        to: address,
+        tokenURI,
+      });
+
+      setTxHash(mintResult.hash);
+      if (mintResult.tokenId) {
+        setTokenId(mintResult.tokenId.toString());
+        console.log('[Create Page] NFT minted successfully, Token ID:', mintResult.tokenId.toString());
+
+        // Step 4: Approve marketplace to transfer NFT
+        setLoadingMessage('Approving marketplace contract...');
+        await approveNFT(mintResult.tokenId);
+        console.log('[Create Page] Marketplace approved');
+
+        // Step 5: List NFT on marketplace
+        setLoadingMessage('Listing NFT on marketplace...');
+        const listResult = await listNFT({
+          nftContract: contracts.nftStorage.address,
+          tokenId: mintResult.tokenId,
+          priceUSD: parseFloat(formData.price),
+        });
+
+        if (listResult.listingId) {
+          setListingId(listResult.listingId.toString());
+        }
+
+        console.log('[Create Page] NFT listed successfully:', listResult);
+        alert(`NFT created and listed successfully!\nToken ID: ${mintResult.tokenId.toString()}\nPrice: $${formData.price} USD`);
+      }
     } catch (error) {
       console.error('Error creating NFT:', error);
       alert(error instanceof Error ? error.message : 'Failed to create NFT');
     } finally {
       setLoading(false);
+      setLoadingMessage('');
     }
   };
 
@@ -208,6 +265,32 @@ export default function CreateNFTPage() {
             </div>
 
             <div>
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+                Price (USD) *
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm">$</span>
+                </div>
+                <input
+                  type="number"
+                  id="price"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  step="0.01"
+                  min="0.01"
+                  className="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+              <p className="mt-1 text-sm text-gray-500">
+                Set the price for your NFT in USD. It will be automatically converted to ETH when listed.
+              </p>
+            </div>
+
+            <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Attributes (Optional)
@@ -279,12 +362,40 @@ export default function CreateNFTPage() {
               </div>
             )}
 
+            {tokenId && (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                <p className="text-sm font-medium text-blue-900 mb-2">NFT Created & Listed Successfully!</p>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-xs font-medium text-blue-800">Token ID:</p>
+                    <p className="text-xs text-blue-700">{tokenId}</p>
+                  </div>
+                  {listingId && (
+                    <div>
+                      <p className="text-xs font-medium text-blue-800">Listing ID:</p>
+                      <p className="text-xs text-blue-700">{listingId}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs font-medium text-blue-800">Price:</p>
+                    <p className="text-xs text-blue-700">${formData.price} USD</p>
+                  </div>
+                  {txHash && (
+                    <div>
+                      <p className="text-xs font-medium text-blue-800">Transaction Hash:</p>
+                      <p className="text-xs text-blue-700 break-all">{txHash}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
               className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Uploading to IPFS...' : 'Upload to IPFS'}
+              {loading ? (loadingMessage || 'Processing...') : 'Create & List NFT'}
             </button>
           </form>
         </div>

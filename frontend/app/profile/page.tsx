@@ -2,20 +2,42 @@
 
 import { useAccount, useBalance, useEnsName } from 'wagmi';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Header from '../components/Header';
+import NFTCard from '@/components/NFTCard';
+import { getUserNFTs, NFTData } from '@/utils/fetchNFTs';
 
 export default function ProfilePage() {
   const { address, isConnected } = useAccount();
   const router = useRouter();
   const { data: ensName } = useEnsName({ address });
   const { data: balance } = useBalance({ address });
+  const [nfts, setNfts] = useState<NFTData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isConnected) {
       router.push('/');
     }
   }, [isConnected, router]);
+
+  useEffect(() => {
+    const fetchNFTs = async () => {
+      if (!address) return;
+
+      setLoading(true);
+      try {
+        const userNFTs = await getUserNFTs(address);
+        setNfts(userNFTs);
+      } catch (error) {
+        console.error('Error fetching NFTs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNFTs();
+  }, [address]);
 
   if (!isConnected || !address) {
     return null;
@@ -96,11 +118,21 @@ export default function ProfilePage() {
             </nav>
           </div>
 
-          {/* NFT Grid Placeholder */}
+          {/* NFT Grid */}
           <div className="p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {/* Placeholder for NFTs */}
-              <div className="text-center py-16 col-span-full">
+            {loading ? (
+              <div className="text-center py-16">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                <p className="mt-4 text-gray-600">Loading your NFTs...</p>
+              </div>
+            ) : nfts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {nfts.map((nft) => (
+                  <NFTCard key={nft.tokenId} nft={nft} showOwner={false} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
                 <svg
                   className="mx-auto h-24 w-24 text-gray-400"
                   fill="none"
@@ -117,7 +149,7 @@ export default function ProfilePage() {
                   Start collecting NFTs to see them here
                 </p>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>
