@@ -13,6 +13,7 @@ export default function CreateNFTPage() {
     name: '',
     description: '',
     price: '',
+    category: 'Art',
   });
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
@@ -30,18 +31,15 @@ export default function CreateNFTPage() {
     if (selectedFile) {
       setFile(selectedFile);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
+      reader.onloadend = () => setPreviewUrl(reader.result as string);
       reader.readAsDataURL(selectedFile);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const addAttribute = () => {
@@ -61,26 +59,13 @@ export default function CreateNFTPage() {
   const uploadImage = async () => {
     if (!file) throw new Error('No file selected');
 
-    console.log('[Create Page] Uploading image to IPFS...');
     const formDataToSend = new FormData();
     formDataToSend.append('file', file);
 
-    console.log('[Create Page] Making fetch request to /api/upload');
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formDataToSend,
-    });
-
-    console.log('[Create Page] Response status:', response.status);
+    const response = await fetch('/api/upload', { method: 'POST', body: formDataToSend });
     const data = await response.json();
-    console.log('[Create Page] Response data:', data);
+    if (!data.success) throw new Error(data.error || 'Failed to upload image');
 
-    if (!data.success) {
-      console.error('[Create Page] Upload failed:', data.error);
-      throw new Error(data.error || 'Failed to upload image');
-    }
-
-    console.log('[Create Page] Image uploaded successfully, CID:', data.cid);
     return data.cid;
   };
 
@@ -89,17 +74,16 @@ export default function CreateNFTPage() {
       name: formData.name,
       description: formData.description,
       image: getIPFSUrl(imageCID),
-      attributes: attributes.filter(attr => attr.trait_type && attr.value),
+      attributes: [
+        ...attributes.filter((attr) => attr.trait_type && attr.value),
+        { trait_type: 'Category', value: formData.category }, // ✅ Category added to metadata
+      ],
     };
 
     const formDataToSend = new FormData();
     formDataToSend.append('metadata', JSON.stringify(metadata));
 
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formDataToSend,
-    });
-
+    const response = await fetch('/api/upload', { method: 'POST', body: formDataToSend });
     const data = await response.json();
     if (!data.success) throw new Error(data.error);
 
@@ -108,62 +92,31 @@ export default function CreateNFTPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!isConnected || !address) {
-      alert('Please connect your wallet first');
-      return;
-    }
-
-    if (!file || !formData.name || !formData.description) {
-      alert('Please fill all required fields');
-      return;
-    }
-
-    if (!formData.price || parseFloat(formData.price) <= 0) {
-      alert('Please enter a valid price in USD');
-      return;
-    }
-
-    setLoading(true);
-    setLoadingMessage('Uploading image to IPFS...');
+    if (!isConnected || !address) return alert('Please connect your wallet first');
+    if (!file || !formData.name || !formData.description) return alert('Fill all required fields');
+    if (!formData.price || parseFloat(formData.price) <= 0) return alert('Invalid price');
 
     try {
-      // Step 1: Upload image to IPFS
+      setLoading(true);
+      setLoadingMessage('Uploading image to IPFS...');
       const uploadedImageCID = await uploadImage();
       setImageCID(uploadedImageCID);
-      console.log('[Create Page] Image CID:', uploadedImageCID);
 
-      // Step 2: Upload metadata to IPFS
       setLoadingMessage('Uploading metadata to IPFS...');
       const uploadedMetadataCID = await uploadMetadata(uploadedImageCID);
       setMetadataCID(uploadedMetadataCID);
-      console.log('[Create Page] Metadata CID:', uploadedMetadataCID);
 
-      // Step 3: Mint NFT on-chain
       setLoadingMessage('Minting NFT on blockchain...');
       const tokenURI = getIPFSUrl(uploadedMetadataCID);
-
-      console.log('[Create Page] Minting NFT with params:', {
-        to: address,
-        tokenURI,
-      });
-
-      const mintResult = await mintNFT({
-        to: address,
-        tokenURI,
-      });
+      const mintResult = await mintNFT({ to: address, tokenURI });
 
       setTxHash(mintResult.hash);
       if (mintResult.tokenId) {
         setTokenId(mintResult.tokenId.toString());
-        console.log('[Create Page] NFT minted successfully, Token ID:', mintResult.tokenId.toString());
 
-        // Step 4: Approve marketplace to transfer NFT
         setLoadingMessage('Approving marketplace contract...');
         await approveNFT(mintResult.tokenId);
-        console.log('[Create Page] Marketplace approved');
 
-        // Step 5: List NFT on marketplace
         setLoadingMessage('Listing NFT on marketplace...');
         const listResult = await listNFT({
           nftContract: contracts.nftStorage.address,
@@ -171,15 +124,15 @@ export default function CreateNFTPage() {
           priceUSD: parseFloat(formData.price),
         });
 
-        if (listResult.listingId) {
-          setListingId(listResult.listingId.toString());
-        }
+        if (listResult.listingId) setListingId(listResult.listingId.toString());
 
-        console.log('[Create Page] NFT listed successfully:', listResult);
-        alert(`NFT created and listed successfully!\nToken ID: ${mintResult.tokenId.toString()}\nPrice: $${formData.price} USD`);
+        alert(
+          `✅ NFT created & listed!\nToken ID: ${mintResult.tokenId}\nCategory: ${formData.category}\nPrice: $${formData.price}`
+        );
       }
-    } catch (error) {
-      console.error('Error creating NFT:', error);
+    } catch (err) {
+      console.error('Error creating NFT:', err);
+      alert(`Error: ${(err as Error).message}`);
     } finally {
       setLoading(false);
       setLoadingMessage('');
@@ -204,21 +157,15 @@ export default function CreateNFTPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Create NFT</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* File Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Upload File *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Upload File *</label>
               <input
                 type="file"
                 accept="image/*,video/*,audio/*"
                 onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-md file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-blue-50 file:text-blue-700
-                  hover:file:bg-blue-100"
                 required
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
               {previewUrl && (
                 <div className="mt-4">
@@ -231,69 +178,83 @@ export default function CreateNFTPage() {
               )}
             </div>
 
+            {/* Name */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Name *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
               <input
                 type="text"
-                id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 placeholder="NFT Name"
                 required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
+            {/* Description */}
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Description *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
               <textarea
-                id="description"
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Describe your NFT"
                 required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
+            {/* Category - Modern Card Selection */}
             <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-                Price (USD) *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Category *</label>
+              <div className="grid grid-cols-3 gap-3">
+                {['Art', 'Gaming', 'Music', 'Sports', 'VirtualWorld', 'Other'].map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, category: cat })}
+                    className={`border rounded-md px-4 py-2 text-sm font-medium transition-all ${
+                      formData.category === cat
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Price */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Price (USD) *</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">$</span>
-                </div>
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 sm:text-sm">
+                  $
+                </span>
                 <input
                   type="number"
-                  id="price"
                   name="price"
                   value={formData.price}
                   onChange={handleInputChange}
                   step="0.01"
                   min="0.01"
-                  className="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0.00"
                   required
+                  className="w-full pl-7 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <p className="mt-1 text-sm text-gray-500">
-                Set the price for your NFT in USD. It will be automatically converted to ETH when listed.
+                Price in USD (auto-converted to ETH during listing)
               </p>
             </div>
 
+            {/* Attributes */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Attributes (Optional)
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Attributes (Optional)</label>
                 <button
                   type="button"
                   onClick={addAttribute}
@@ -331,70 +292,31 @@ export default function CreateNFTPage() {
               </div>
             </div>
 
-            {imageCID && (
-              <div className="bg-green-50 border border-green-200 rounded-md p-4">
-                <p className="text-sm font-medium text-green-900 mb-1">Image CID:</p>
-                <p className="text-xs text-green-700 break-all">{imageCID}</p>
-                <a
-                  href={getIPFSUrl(imageCID)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline"
-                >
-                  View on IPFS
-                </a>
-              </div>
-            )}
-
-            {metadataCID && (
-              <div className="bg-green-50 border border-green-200 rounded-md p-4">
-                <p className="text-sm font-medium text-green-900 mb-1">Metadata CID:</p>
-                <p className="text-xs text-green-700 break-all">{metadataCID}</p>
-                <a
-                  href={getIPFSUrl(metadataCID)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline"
-                >
-                  View on IPFS
-                </a>
-              </div>
-            )}
-
+            {/* Minted / Listing Info */}
             {tokenId && (
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-                <p className="text-sm font-medium text-blue-900 mb-2">NFT Created & Listed Successfully!</p>
+                <p className="text-sm font-medium text-blue-900 mb-2">NFT Created Successfully!</p>
                 <div className="space-y-2">
-                  <div>
-                    <p className="text-xs font-medium text-blue-800">Token ID:</p>
-                    <p className="text-xs text-blue-700">{tokenId}</p>
-                  </div>
-                  {listingId && (
-                    <div>
-                      <p className="text-xs font-medium text-blue-800">Listing ID:</p>
-                      <p className="text-xs text-blue-700">{listingId}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-xs font-medium text-blue-800">Price:</p>
-                    <p className="text-xs text-blue-700">${formData.price} USD</p>
-                  </div>
+                  <p className="text-xs"><strong>Token ID:</strong> {tokenId}</p>
+                  <p className="text-xs"><strong>Category:</strong> {formData.category}</p>
+                  <p className="text-xs"><strong>Price:</strong> ${formData.price} USD</p>
+                  {listingId && <p className="text-xs"><strong>Listing ID:</strong> {listingId}</p>}
                   {txHash && (
-                    <div>
-                      <p className="text-xs font-medium text-blue-800">Transaction Hash:</p>
-                      <p className="text-xs text-blue-700 break-all">{txHash}</p>
-                    </div>
+                    <p className="text-xs break-all">
+                      <strong>Transaction Hash:</strong> {txHash}
+                    </p>
                   )}
                 </div>
               </div>
             )}
 
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
               className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? (loadingMessage || 'Processing...') : 'Create & List NFT'}
+              {loading ? loadingMessage || 'Processing...' : 'Create & List NFT'}
             </button>
           </form>
         </div>

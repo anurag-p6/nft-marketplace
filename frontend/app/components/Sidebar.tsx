@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-
+import  HoverSidebar from '../HoverSidebar/HoverSidebar'
 interface SidebarItemProps {
   icon: React.ReactNode;
   label: string;
@@ -133,39 +133,44 @@ export default function Sidebar() {
           </nav>
 
           {/* Browse Categories */}
-          <div className="mb-8">
-            <h3 className="px-4 mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Browse by Category
-            </h3>
-            <div className="space-y-1">
-              <CategoryItem label="All NFTs" href="/explore/all" active={pathname === '/explore/all'} />
-              <CategoryItem label="Art" href="/explore/art" active={pathname === '/explore/art'} />
-              <CategoryItem label="Gaming" href="/explore/gaming" active={pathname === '/explore/gaming'} />
-              <CategoryItem label="Memberships" href="/explore/memberships" active={pathname === '/explore/memberships'} />
-              <CategoryItem label="Music" href="/explore/music" active={pathname === '/explore/music'} />
-              <CategoryItem label="Photography" href="/explore/photography" active={pathname === '/explore/photography'} />
-              <CategoryItem label="PFPs" href="/explore/pfps" active={pathname === '/explore/pfps'} />
-              <CategoryItem label="Sports" href="/explore/sports" active={pathname === '/explore/sports'} />
-              <CategoryItem label="Virtual Worlds" href="/explore/virtual-worlds" active={pathname === '/explore/virtual-worlds'} />
-            </div>
-          </div>
+{/* Browse Categories */}
+<div className="mb-8">
+  <HoverSidebar title="Browse by Category">
+    <div className="space-y-1">
+      <CategoryItem label="All NFTs" href="/explore/all" active={pathname === '/explore/all'} />
+      <CategoryItem 
+  label="Art" 
+  href="/Category/art" 
+  active={pathname === '/Category/art'} 
+/>
+    <CategoryItem label="Gaming" href="/Category/gaming" active={pathname === '/Category/gaming'} />
+<CategoryItem label="Art" href="/Category/art" active={pathname === '/Category/art'} />
+<CategoryItem label="Music" href="/Category/music" active={pathname === '/Category/music'} />
+<CategoryItem label="Photography" href="/Category/photography" active={pathname === '/Category/photography'} />
+<CategoryItem label="Sports" href="/Category/sports" active={pathname === '/Category/sports'} />
+<CategoryItem label="Virtual World" href="/Category/virtualworld" active={pathname === '/Category/virtualworld'} />
 
-          {/* Resources */}
-          <div>
-            <h3 className="px-4 mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Resources
-            </h3>
-            <div className="space-y-1">
-              <CategoryItem label="Learn" href="/learn" active={pathname === '/learn'} />
-              <CategoryItem label="Help Center" href="/help" active={pathname === '/help'} />
-              <CategoryItem label="Platform Status" href="/status" active={pathname === '/status'} />
-              <CategoryItem label="Partners" href="/partners" active={pathname === '/partners'} />
-              <CategoryItem label="Gas Free" href="/gas-free" active={pathname === '/gas-free'} />
-              <CategoryItem label="Blog" href="/blog" active={pathname === '/blog'} />
-              <CategoryItem label="Docs" href="/docs" active={pathname === '/docs'} />
-              <CategoryItem label="Newsletter" href="/newsletter" active={pathname === '/newsletter'} />
-            </div>
-          </div>
+    </div>
+  </HoverSidebar>
+</div>
+
+{/* Resources */}
+<div>
+  <HoverSidebar title="Resources">
+    <div className="space-y-1">
+      <CategoryItem label="Learn" href="/learn" active={pathname === '/learn'} />
+      <CategoryItem label="Help Center" href="/help" active={pathname === '/help'} />
+      <CategoryItem label="Platform Status" href="/status" active={pathname === '/status'} />
+      <CategoryItem label="Partners" href="/partners" active={pathname === '/partners'} />
+      <CategoryItem label="Gas Free" href="/gas-free" active={pathname === '/gas-free'} />
+      <CategoryItem label="Blog" href="/blog" active={pathname === '/blog'} />
+      <CategoryItem label="Docs" href="/docs" active={pathname === '/docs'} />
+      <CategoryItem label="Newsletter" href="/newsletter" active={pathname === '/newsletter'} />
+    </div>
+  </HoverSidebar>
+</div>
+
+             
 
           {/* Language Selector */}
           <div className="mt-8 pt-8 border-t border-gray-200">
