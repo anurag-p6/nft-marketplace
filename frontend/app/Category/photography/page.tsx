@@ -1,7 +1,28 @@
+'use client';
+
 import Link from 'next/link';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Loader from '@/components/Loader'; 
 
 export default function Photography() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading for 2 seconds
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader message="Loading Photography..." />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-12">

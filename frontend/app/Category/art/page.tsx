@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Loader from '@/components/Loader'; 
 
 type Artwork = {
   id: string;
@@ -16,7 +17,11 @@ function ArtworkCard({ art }: { art: Artwork }) {
   return (
     <article className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <div className="aspect-video bg-gray-100">
-        <img src={art.image || '/placeholder-nft.png'} alt={art.title} className="w-full h-full object-cover" />
+        <img
+          src={art.image || '/placeholder-nft.png'}
+          alt={art.title}
+          className="w-full h-full object-cover"
+        />
       </div>
       <div className="p-3">
         <h3 className="font-semibold text-gray-900">{art.title}</h3>
@@ -35,18 +40,66 @@ function ArtistSpotlight({ name, bio }: { name: string; bio: string }) {
     <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
       <h4 className="font-semibold">{name}</h4>
       <p className="text-sm text-gray-600 mt-1 line-clamp-3">{bio}</p>
-      <Link href={`/profile`} className="text-sm text-purple-600 mt-2 inline-block">View profile →</Link>
+      <Link
+        href={`/profile`}
+        className="text-sm text-purple-600 mt-2 inline-block"
+      >
+        View profile →
+      </Link>
     </div>
   );
 }
 
 export default function Art() {
-  const [filters, setFilters] = useState({ style: 'All', medium: 'All', artist: 'All' });
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    style: 'All',
+    medium: 'All',
+    artist: 'All',
+  });
+
+  useEffect(() => {
+    // Simulate loading for 2 seconds
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    // ✅ Centered loader
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader message="Loading Art..." />
+      </div>
+    );
+  }
 
   const sampleArt: Artwork[] = [
-    { id: '1', title: 'Neon Dreams', artist: 'A. Rivera', style: 'Neo-Expressionism', medium: 'Digital', image: '/placeholder-nft.png' },
-    { id: '2', title: 'Silent Waves', artist: 'M. Chen', style: 'Abstract', medium: 'Photography', image: '/placeholder-nft.png' },
-    { id: '3', title: 'Golden Hour', artist: 'L. Ito', style: 'Impressionism', medium: 'Painting', image: '/placeholder-nft.png' },
+    {
+      id: '1',
+      title: 'Neon Dreams',
+      artist: 'A. Rivera',
+      style: 'Neo-Expressionism',
+      medium: 'Digital',
+      image: '/placeholder-nft.png',
+    },
+    {
+      id: '2',
+      title: 'Silent Waves',
+      artist: 'M. Chen',
+      style: 'Abstract',
+      medium: 'Photography',
+      image: '/placeholder-nft.png',
+    },
+    {
+      id: '3',
+      title: 'Golden Hour',
+      artist: 'L. Ito',
+      style: 'Impressionism',
+      medium: 'Painting',
+      image: '/placeholder-nft.png',
+    },
   ];
 
   const featuredCollections = [
@@ -59,7 +112,9 @@ export default function Art() {
       <main className="container mx-auto px-4 py-8">
         <header className="mb-6">
           <h1 className="text-3xl font-bold">Art</h1>
-          <p className="text-gray-600 mt-1">Curated NFT art: paintings, illustrations, and digital artwork.</p>
+          <p className="text-gray-600 mt-1">
+            Curated NFT art: paintings, illustrations, and digital artwork.
+          </p>
         </header>
 
         {/* Filters */}
@@ -68,7 +123,13 @@ export default function Art() {
             <h3 className="font-medium mb-2">Filters</h3>
             <div className="space-y-2">
               <label className="block text-sm">Style</label>
-              <select className="w-full border rounded p-2" value={filters.style} onChange={(e) => setFilters(s => ({ ...s, style: e.target.value }))}>
+              <select
+                className="w-full border rounded p-2"
+                value={filters.style}
+                onChange={(e) =>
+                  setFilters((s) => ({ ...s, style: e.target.value }))
+                }
+              >
                 <option>All</option>
                 <option>Abstract</option>
                 <option>Impressionism</option>
@@ -77,7 +138,13 @@ export default function Art() {
               </select>
 
               <label className="block text-sm mt-2">Medium</label>
-              <select className="w-full border rounded p-2" value={filters.medium} onChange={(e) => setFilters(s => ({ ...s, medium: e.target.value }))}>
+              <select
+                className="w-full border rounded p-2"
+                value={filters.medium}
+                onChange={(e) =>
+                  setFilters((s) => ({ ...s, medium: e.target.value }))
+                }
+              >
                 <option>All</option>
                 <option>Digital</option>
                 <option>Painting</option>
@@ -85,7 +152,13 @@ export default function Art() {
               </select>
 
               <label className="block text-sm mt-2">Artist</label>
-              <select className="w-full border rounded p-2" value={filters.artist} onChange={(e) => setFilters(s => ({ ...s, artist: e.target.value }))}>
+              <select
+                className="w-full border rounded p-2"
+                value={filters.artist}
+                onChange={(e) =>
+                  setFilters((s) => ({ ...s, artist: e.target.value }))
+                }
+              >
                 <option>All</option>
                 <option>A. Rivera</option>
                 <option>M. Chen</option>
@@ -99,8 +172,12 @@ export default function Art() {
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <h3 className="font-medium mb-3">Featured Collections</h3>
               <div className="flex gap-3 flex-wrap">
-                {featuredCollections.map(c => (
-                  <Link key={c.id} href={`/explore/collections/${c.id}`} className="px-3 py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded border border-gray-100 text-sm text-gray-800">
+                {featuredCollections.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/explore/collections/${c.id}`}
+                    className="px-3 py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded border border-gray-100 text-sm text-gray-800"
+                  >
                     {c.title}
                   </Link>
                 ))}
@@ -129,17 +206,28 @@ export default function Art() {
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Discover Art</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sampleArt.map(a => <ArtworkCard key={a.id} art={a} />)}
+            {sampleArt.map((a) => (
+              <ArtworkCard key={a.id} art={a} />
+            ))}
           </div>
         </section>
 
-        {/* Artist spotlights */}
+        {/* Artist Spotlights */}
         <section>
           <h2 className="text-xl font-semibold mb-4">Artist Spotlights</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <ArtistSpotlight name="A. Rivera" bio="Digital artist exploring neon palettes and surreal landscapes. Recent drop sold out in minutes." />
-            <ArtistSpotlight name="M. Chen" bio="Photographer and NFT creator blending documentary and generative elements." />
-            <ArtistSpotlight name="L. Ito" bio="Painter focusing on texture and light — now transitioning to tokenized works." />
+            <ArtistSpotlight
+              name="A. Rivera"
+              bio="Digital artist exploring neon palettes and surreal landscapes. Recent drop sold out in minutes."
+            />
+            <ArtistSpotlight
+              name="M. Chen"
+              bio="Photographer and NFT creator blending documentary and generative elements."
+            />
+            <ArtistSpotlight
+              name="L. Ito"
+              bio="Painter focusing on texture and light — now transitioning to tokenized works."
+            />
           </div>
         </section>
       </main>

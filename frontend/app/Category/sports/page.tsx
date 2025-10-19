@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Loader from '@/components/Loader'; 
 
 type Card = {
   id: string;
@@ -26,6 +27,24 @@ function TradingCard({ card }: { card: Card }) {
 }
 
 export default function Sports() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading for 2 seconds
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader message="Loading Sports Cards..." />
+      </div>
+    );
+  }
+
   const sampleCards: Card[] = [
     { id: 's1', title: 'Legendary Moment #1', player: 'J. Doe', team: 'Tigers' },
     { id: 's2', title: 'Rising Star Card', player: 'A. Smith', team: 'Raptors' },

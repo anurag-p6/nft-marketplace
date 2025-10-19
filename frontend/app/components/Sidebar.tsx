@@ -3,184 +3,235 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import  HoverSidebar from '../HoverSidebar/HoverSidebar'
+import { 
+  Home, 
+  TrendingUp, 
+  BarChart3, 
+  Plus,
+  Image,
+  Gamepad2,
+  Music,
+  Camera,
+  Trophy,
+  Globe,
+  Users,
+  BookOpen,
+  HelpCircle,
+  Server,
+  Handshake,
+  Zap,
+  FileText,
+  Mail,
+  ChevronLeft,
+  Menu,
+  X
+} from 'lucide-react';
+import HoverSidebar from '../HoverSidebar/HoverSidebar';
+
 interface SidebarItemProps {
+  icon: React.ReactNode;
+  label: string;
+  href: string;
+  active?: boolean;
+  collapsed?: boolean;
+}
+
+const SidebarItem = ({ icon, label, href, active, collapsed }: SidebarItemProps) => (
+  <Link
+    href={href}
+    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+      active
+        ? 'bg-blue-50 text-blue-600 border border-blue-200'
+        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+    } ${collapsed ? 'justify-center' : ''}`}
+  >
+    <div className={`w-5 h-5 flex-shrink-0 ${active ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
+      {icon}
+    </div>
+    {!collapsed && <span className="text-sm font-medium">{label}</span>}
+  </Link>
+);
+
+interface CategoryItemProps {
   icon: React.ReactNode;
   label: string;
   href: string;
   active?: boolean;
 }
 
-const SidebarItem = ({ icon, label, href, active }: SidebarItemProps) => (
+const CategoryItem = ({ icon, label, href, active }: CategoryItemProps) => (
   <Link
     href={href}
-    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+    className={`flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all ${
       active
-        ? 'bg-purple-50 text-purple-600 font-semibold'
-        : 'text-gray-700 hover:bg-gray-100'
+        ? 'bg-blue-50 text-blue-600 font-medium'
+        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
     }`}
   >
-    <div className="w-5 h-5">{icon}</div>
+    <div className={`w-4 h-4 ${active ? 'text-blue-600' : 'text-gray-400'}`}>
+      {icon}
+    </div>
     <span>{label}</span>
   </Link>
 );
 
-interface CategoryItemProps {
-  label: string;
-  href: string;
-  active?: boolean;
+interface SectionProps {
+  title: string;
+  collapsed?: boolean;
+  children: React.ReactNode;
 }
 
-const CategoryItem = ({ label, href, active }: CategoryItemProps) => (
-  <Link
-    href={href}
-    className={`block px-4 py-2 rounded-lg text-sm transition-all ${
-      active
-        ? 'bg-purple-50 text-purple-600 font-medium'
-        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-    }`}
-  >
-    {label}
-  </Link>
-);
+const Section = ({ title, collapsed, children }: SectionProps) => {
+  if (collapsed) return <div className="space-y-1">{children}</div>;
+  
+  return (
+    <div className="mb-6">
+      <h3 className="px-3 mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+        {title}
+      </h3>
+      <div className="space-y-1">
+        {children}
+      </div>
+    </div>
+  );
+};
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const mainNavItems = [
+    { icon: <Home />, label: 'Home', href: '/', active: pathname === '/' },
+    { icon: <TrendingUp />, label: 'Drops', href: '/drops', active: pathname === '/drops' },
+    { icon: <BarChart3 />, label: 'Stats', href: '/stats', active: pathname === '/stats' },
+    { icon: <Plus />, label: 'Create', href: '/create', active: pathname === '/create' },
+  ];
+
+  const categories = [
+    { icon: <Image />, label: 'Art', href: '/Category/art', active: pathname === '/Category/art' },
+    { icon: <Gamepad2 />, label: 'Gaming', href: '/Category/gaming', active: pathname === '/Category/gaming' },
+    { icon: <Music />, label: 'Music', href: '/Category/music', active: pathname === '/Category/music' },
+    { icon: <Camera />, label: 'Photography', href: '/Category/photography', active: pathname === '/Category/photography' },
+    { icon: <Users />, label: 'PFP', href: '/Category/pfp', active: pathname === '/Category/pfp' },
+    { icon: <Trophy />, label: 'Sports', href: '/Category/sports', active: pathname === '/Category/sports' },
+    { icon: <Globe />, label: 'Virtual Worlds', href: '/Category/virtual-worlds', active: pathname === '/Category/virtualworld' },
+  ];
+
+  const resources = [
+    { icon: <BookOpen />, label: 'Learn', href: '/learn', active: pathname === '/learn' },
+    { icon: <HelpCircle />, label: 'Help Center', href: '/help', active: pathname === '/help' },
+    { icon: <Server />, label: 'Status', href: '/status', active: pathname === '/status' },
+    { icon: <Handshake />, label: 'Partners', href: '/partners', active: pathname === '/partners' },
+    { icon: <Zap />, label: 'Gas Free', href: '/gas-free', active: pathname === '/gas-free' },
+    { icon: <FileText />, label: 'Blog', href: '/blog', active: pathname === '/blog' },
+    { icon: <BookOpen />, label: 'Docs', href: '/docs', active: pathname === '/docs' },
+    { icon: <Mail />, label: 'Newsletter', href: '/newsletter', active: pathname === '/newsletter' },
+  ];
 
   return (
     <>
       {/* Mobile Menu Toggle */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-20 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
-        aria-label="Toggle sidebar"
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
       >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          {isOpen ? (
-            <path d="M6 18L18 6M6 6l12 12" />
-          ) : (
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          )}
-        </svg>
+        {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      </button>
+
+      {/* Desktop Collapse Toggle */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="hidden lg:flex absolute -right-3 top-6 z-30 p-1.5 bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+      >
+        <ChevronLeft className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Overlay for mobile */}
-      {isOpen && (
+      {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
-          onClick={() => setIsOpen(false)}
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsMobileOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 overflow-y-auto transition-transform duration-300 z-40 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
+        className={`fixed lg:sticky top-0 h-screen bg-white border-r border-gray-200 overflow-y-auto transition-all duration-300 z-50 flex flex-col ${
+          isMobileOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0'
+        } ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
       >
-        <div className="p-6 pt-24 lg:pt-6">
+        <div className={`flex-1 p-4 ${isCollapsed ? 'lg:px-3' : ''}`}>
+          {/* Logo */}
+          <div className={`flex items-center gap-3 mb-8 pt-2 ${isCollapsed ? 'lg:justify-center' : ''}`}>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+              </svg>
+            </div>
+            {!isCollapsed && (
+              <div>
+                <span className="text-lg font-bold text-gray-900 block">NFT Market</span>
+                <span className="text-xs text-gray-500 block">Digital Marketplace</span>
+              </div>
+            )}
+          </div>
+
           {/* Main Navigation */}
-          <nav className="space-y-1 mb-8">
-            <SidebarItem
-              icon={
-                <svg fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                  <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-              }
-              label="Home"
-              href="/"
-              active={pathname === '/'}
-            />
-            <SidebarItem
-              icon={
-                <svg fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                  <path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                </svg>
-              }
-              label="Drops"
-              href="/drops"
-              active={pathname === '/drops'}
-            />
-            <SidebarItem
-              icon={
-                <svg fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                  <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              }
-              label="Stats"
-              href="/stats"
-              active={pathname === '/stats'}
-            />
-            <SidebarItem
-              icon={
-                <svg fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                  <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              }
-              label="Create"
-              href="/create"
-              active={pathname === '/create'}
-            />
-          </nav>
+          <Section title="Navigation" collapsed={isCollapsed}>
+            {mainNavItems.map((item) => (
+              <SidebarItem
+                key={item.href}
+                icon={item.icon}
+                label={item.label}
+                href={item.href}
+                active={item.active}
+                collapsed={isCollapsed}
+              />
+            ))}
+          </Section>
 
-          {/* Browse Categories */}
-{/* Browse Categories */}
-<div className="mb-8">
-  <HoverSidebar title="Browse by Category">
-    <div className="space-y-1">
-      <CategoryItem label="All NFTs" href="/explore/all" active={pathname === '/explore/all'} />
-      <CategoryItem 
-  label="Art" 
-  href="/Category/art" 
-  active={pathname === '/Category/art'} 
-/>
-    <CategoryItem label="Gaming" href="/Category/gaming" active={pathname === '/Category/gaming'} />
-<CategoryItem label="Art" href="/Category/art" active={pathname === '/Category/art'} />
-<CategoryItem label="Music" href="/Category/music" active={pathname === '/Category/music'} />
-<CategoryItem label="Photography" href="/Category/photography" active={pathname === '/Category/photography'} />
-<CategoryItem label="Sports" href="/Category/sports" active={pathname === '/Category/sports'} />
-<CategoryItem label="Virtual World" href="/Category/virtualworld" active={pathname === '/Category/virtualworld'} />
-
-    </div>
-  </HoverSidebar>
-</div>
+          {/* Categories */}
+         {/* Browse Categories */}
+<HoverSidebar title="Browse by Category">
+  <Section title="Categories" collapsed={isCollapsed}>
+    {categories.map((Category) => (
+      <CategoryItem
+        key={Category.href}
+        icon={Category.icon}
+        label={Category.label}
+        href={Category.href}
+        active={Category.active}
+      />
+    ))}
+  </Section>
+</HoverSidebar>
 
 {/* Resources */}
-<div>
-  <HoverSidebar title="Resources">
-    <div className="space-y-1">
-      <CategoryItem label="Learn" href="/learn" active={pathname === '/learn'} />
-      <CategoryItem label="Help Center" href="/help" active={pathname === '/help'} />
-      <CategoryItem label="Platform Status" href="/status" active={pathname === '/status'} />
-      <CategoryItem label="Partners" href="/partners" active={pathname === '/partners'} />
-      <CategoryItem label="Gas Free" href="/gas-free" active={pathname === '/gas-free'} />
-      <CategoryItem label="Blog" href="/blog" active={pathname === '/blog'} />
-      <CategoryItem label="Docs" href="/docs" active={pathname === '/docs'} />
-      <CategoryItem label="Newsletter" href="/newsletter" active={pathname === '/newsletter'} />
-    </div>
-  </HoverSidebar>
-</div>
+<HoverSidebar title="Resources">
+  <Section title="Resources" collapsed={isCollapsed}>
+    {resources.map((resource) => (
+      <CategoryItem
+        key={resource.href}
+        icon={resource.icon}
+        label={resource.label}
+        href={resource.href}
+        active={resource.active}
+      />
+    ))}
+  </Section>
+</HoverSidebar>
 
-             
+        </div>
 
-          {/* Language Selector */}
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg w-full transition-colors">
-              <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                <path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-              </svg>
-              <span>Language</span>
-            </button>
-          </div>
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-200">
+          <button className={`flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors ${
+            isCollapsed ? 'lg:justify-center' : ''
+          }`}>
+            <Globe className="w-4 h-4" />
+            {!isCollapsed && <span>English</span>}
+          </button>
         </div>
       </aside>
     </>

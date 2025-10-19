@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-
+import Loader from '@/components/Loader'; 
 type Stat = { label: string; value: string };
 
 function StatCard({ label, value }: Stat) {

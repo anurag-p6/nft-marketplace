@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import NFTCard from '@/components/NFTCard';
 import { getAllNFTs, NFTData } from '@/utils/fetchNFTs';
 import Link from 'next/link';
+import Loader from '@/components/Loader'; // Import the Loader component
 
 export default function Home() {
   const [nfts, setNfts] = useState<NFTData[]>([]);
@@ -46,10 +47,8 @@ export default function Home() {
         <section className="mt-16">
           <h2 className="text-3xl font-bold mb-8 text-gray-900">Explore NFTs</h2>
           {loading ? (
-            <div className="text-center py-16">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-              <p className="mt-4 text-gray-700">Loading NFTs...</p>
-            </div>
+            // use centralized Loader component for consistency
+            <Loader message="Loading NFTs..." />
           ) : nfts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {nfts.map((nft) => (

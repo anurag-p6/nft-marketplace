@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
+import Loader from '@/components/Loader'; 
 
 type Track = {
   id: string;
@@ -37,6 +38,24 @@ function AudioPlayer({ src }: { src?: string }) {
 }
 
 export default function Music() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading for 2 seconds
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader message="Loading Music..." />
+      </div>
+    );
+  }
+
   const tracks: Track[] = [
     { id: 'm1', title: 'Aurora Beats', artist: 'S. Vega', duration: '2:45', audio: '' },
     { id: 'm2', title: 'Echoes', artist: 'R. Snow', duration: '3:10', audio: '' },

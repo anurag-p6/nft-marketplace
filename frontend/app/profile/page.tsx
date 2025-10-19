@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import Header from '../components/Header';
 import NFTCard from '@/components/NFTCard';
 import { getUserNFTs, NFTData } from '@/utils/fetchNFTs';
-
+import Loader from '@/components/Loader'; 
 export default function ProfilePage() {
   const { address, isConnected } = useAccount();
   const router = useRouter();

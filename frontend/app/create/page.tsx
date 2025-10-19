@@ -6,6 +6,7 @@ import { NFTMetadata, getIPFSUrl } from '@/utils/ipfs';
 import { mintNFT, approveNFT } from '@/utils/nft';
 import { listNFT } from '@/utils/marketplace';
 import { contracts } from '@/config/contracts';
+import Loader from '@/components/Loader'; 
 
 export default function CreateNFTPage() {
   const { address, isConnected } = useAccount();
