@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Home, 
   TrendingUp, 
@@ -32,11 +32,13 @@ interface SidebarItemProps {
   href: string;
   active?: boolean;
   collapsed?: boolean;
+  onClick?: () => void;
 }
 
-const SidebarItem = ({ icon, label, href, active, collapsed }: SidebarItemProps) => (
+const SidebarItem = ({ icon, label, href, active, collapsed, onClick }: SidebarItemProps) => (
   <Link
     href={href}
+    onClick={onClick}
     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
       active
         ? 'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800'
@@ -56,11 +58,13 @@ interface CategoryItemProps {
   href: string;
   active?: boolean;
   collapsed?: boolean;
+  onClick?: () => void;
 }
 
-const CategoryItem = ({ icon, label, href, active, collapsed }: CategoryItemProps) => (
+const CategoryItem = ({ icon, label, href, active, collapsed, onClick }: CategoryItemProps) => (
   <Link
     href={href}
+    onClick={onClick}
     className={`flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all ${
       active
         ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-medium'
@@ -95,10 +99,34 @@ const Section = ({ title, collapsed, children }: SectionProps) => {
   );
 };
 
-export default function Sidebar() {
+interface SidebarProps {
+  isMobileOpen: boolean;
+  onMobileClose: () => void;
+}
+
+export default function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Auto-collapse sidebar on desktop by default
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) { // lg breakpoint
+        setIsCollapsed(true);
+      }
+    };
+
+    // Set initial state
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Close mobile sidebar when route changes
+  useEffect(() => {
+    onMobileClose();
+  }, [pathname, onMobileClose]);
 
   const mainNavItems = [
     { icon: <Home />, label: 'Home', href: '/', active: pathname === '/' },
@@ -128,25 +156,75 @@ export default function Sidebar() {
     { icon: <Mail />, label: 'Newsletter', href: '/newsletter', active: pathname === '/newsletter' },
   ];
 
+  const handleLinkClick = () => {
+    // Close mobile sidebar when a link is clicked
+    if (window.innerWidth < 1024) {
+      onMobileClose();
+    }
+  };
+
   return (
     <>
-      {/* Desktop Collapse Toggle */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="hidden lg:flex absolute -right-3 top-6 z-30 p-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
-      >
-        <ChevronLeft className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
-      </button>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={onMobileClose}
+        />
+      )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky top-0 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 overflow-y-auto transition-all duration-300 z-30 flex flex-col ${
+        className={`fixed lg:sticky top-0 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 overflow-y-auto transition-all duration-300 z-50 flex flex-col ${
           isMobileOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0'
         } ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
       >
+        {/* Mobile Header */}
+        <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <Link href="/" className="flex items-center gap-3" onClick={handleLinkClick}>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.31-1.19-6-4.98-6-9V8.3l6-3.3 6 3.3V11c0 4.02-2.69 7.81-6 9z" />
+              </svg>
+            </div>
+            <div>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">NFT Market</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 block">Digital Marketplace</span>
+            </div>
+          </Link>
+          <button
+            onClick={onMobileClose}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </button>
+        </div>
+
         <div className={`flex-1 p-4 ${isCollapsed ? 'lg:px-3' : ''}`}>
-          {/* Logo - Hidden when collapsed */}
-         
+          {/* Desktop Logo - Hidden when collapsed */}
+          {!isCollapsed && (
+            <div className="hidden lg:block mb-6">
+              <Link href="/" className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.31-1.19-6-4.98-6-9V8.3l6-3.3 6 3.3V11c0 4.02-2.69 7.81-6 9z" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">NFT Market</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 block">Digital Marketplace</span>
+                </div>
+              </Link>
+            </div>
+          )}
+
+          {/* Desktop Collapse Toggle */}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="hidden lg:flex absolute -right-3 top-6 z-30 p-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+          >
+            <ChevronLeft className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
+          </button>
 
           {/* Main Navigation */}
           <Section title="Navigation" collapsed={isCollapsed}>
@@ -158,6 +236,7 @@ export default function Sidebar() {
                 href={item.href}
                 active={item.active}
                 collapsed={isCollapsed}
+                onClick={handleLinkClick}
               />
             ))}
           </Section>
@@ -172,6 +251,7 @@ export default function Sidebar() {
                 href={category.href}
                 active={category.active}
                 collapsed={isCollapsed}
+                onClick={handleLinkClick}
               />
             ))}
           </Section>
@@ -186,6 +266,7 @@ export default function Sidebar() {
                 href={resource.href}
                 active={resource.active}
                 collapsed={isCollapsed}
+                onClick={handleLinkClick}
               />
             ))}
           </Section>

@@ -7,15 +7,17 @@ import { useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import { Search, Plus, Compass, User, Sun, Moon, Menu } from 'lucide-react';
 
-export default function Header() {
+interface HeaderProps {
+  onMobileMenuClick: () => void;
+}
+
+export default function Header({ onMobileMenuClick }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [darkMode, setDarkMode] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const { address } = useAccount();
 
   useEffect(() => {
-    // Check for saved theme preference or system preference
     const isDark = localStorage.getItem('darkMode') === 'true' || 
       (window.matchMedia('(prefers-color-scheme: dark)').matches && !localStorage.getItem('darkMode'));
     setDarkMode(isDark);
@@ -43,15 +45,19 @@ export default function Header() {
     }
   };
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-gray-200 bg-white/80 dark:bg-gray-900/80 dark:border-gray-700 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white/80 dark:bg-gray-900/80 dark:border-gray-700 backdrop-blur-xl">
       <div className="w-full px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-4">
-          {/* Logo - Always positioned at the left */}
+          {/* Mobile Menu Button */}
+          <button
+            onClick={onMobileMenuClick}
+            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+
+          {/* Logo */}
           <Link href="/" className="flex items-center gap-3 shrink-0">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -64,16 +70,8 @@ export default function Header() {
             </div>
           </Link>
 
-          {/* Mobile Menu Button - Moved to the right side */}
-          <button
-            onClick={toggleMobileMenu}
-            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-
-          {/* Search Bar - Centered on desktop */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-2xl hidden md:block mx-8">
+          {/* Search Bar - Hidden on mobile */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-2xl hidden md:block">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
@@ -88,7 +86,7 @@ export default function Header() {
             </div>
           </form>
 
-          {/* Navigation Items - Right side */}
+          {/* Navigation Items */}
           <div className="flex items-center gap-2">
             {/* Dark/Light Mode Toggle */}
             <button
@@ -154,32 +152,6 @@ export default function Header() {
           </div>
         </form>
       </div>
-
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-          <div className="px-4 py-2 space-y-1">
-            <Link
-              href="/"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <Compass className="h-4 w-4" />
-              Explore
-            </Link>
-            {address && (
-              <Link
-                href="/profile"
-                className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <User className="h-4 w-4" />
-                Profile
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   );
 }
