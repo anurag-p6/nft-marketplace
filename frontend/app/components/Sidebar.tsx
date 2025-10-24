@@ -115,7 +115,7 @@ export default function Sidebar() {
     { icon: <Camera />, label: 'Photography', href: '/Category/photography', active: pathname === '/Category/photography' },
     { icon: <Users />, label: 'PFP', href: '/Category/pfp', active: pathname === '/Category/pfp' },
     { icon: <Trophy />, label: 'Sports', href: '/Category/sports', active: pathname === '/Category/sports' },
-    { icon: <Globe />, label: 'Virtual Worlds', href: '/Category/virtualworld', active: pathname === '/Category/virtualworld' },
+    { icon: <Globe />, label: 'Virtual Worlds', href: '/Category/virtual-worlds', active: pathname === '/Category/virtual-worlds' },
   ];
 
   const resources = [
@@ -162,20 +162,17 @@ export default function Sidebar() {
         } ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
       >
         <div className={`flex-1 p-4 ${isCollapsed ? 'lg:px-3' : ''}`}>
-          {/* Logo Section */}
+          {/* Logo */}
           <div className={`flex items-center gap-3 mb-8 pt-2 ${isCollapsed ? 'lg:justify-center' : ''}`}>
             <Link 
               href="/" 
               className={`flex items-center gap-3 group shrink-0 ${isCollapsed ? 'lg:justify-center' : ''}`}
             >
-              {/* Logo Icon */}
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
                 <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.31-1.19-6-4.98-6-9V8.3l6-3.3 6 3.3V11c0 4.02-2.69 7.81-6 9z"/>
+                  <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
                 </svg>
               </div>
-              
-              {/* Logo Text - Only show when not collapsed */}
               {!isCollapsed && (
                 <div>
                   <span className="text-lg font-bold text-gray-900 block">NFT Market</span>
@@ -199,9 +196,9 @@ export default function Sidebar() {
             ))}
           </Section>
 
-          {/* Browse Categories */}
+          {/* Categories - Fixed: Remove collapsed prop from Section inside HoverSidebar */}
           <HoverSidebar title="Browse by Category">
-            <Section title="Categories" collapsed={isCollapsed}>
+            <Section title="Categories">
               {categories.map((category) => (
                 <CategoryItem
                   key={category.href}
@@ -214,9 +211,9 @@ export default function Sidebar() {
             </Section>
           </HoverSidebar>
 
-          {/* Resources */}
+          {/* Resources - Fixed: Remove collapsed prop from Section inside HoverSidebar */}
           <HoverSidebar title="Resources">
-            <Section title="Resources" collapsed={isCollapsed}>
+            <Section title="Resources">
               {resources.map((resource) => (
                 <CategoryItem
                   key={resource.href}
@@ -230,33 +227,14 @@ export default function Sidebar() {
           </HoverSidebar>
         </div>
 
-        {/* Footer - Language Selector */}
+        {/* Footer */}
         <div className="p-4 border-t border-gray-200">
-          <div className={`flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-600 rounded-lg transition-colors ${
+          <button className={`flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors ${
             isCollapsed ? 'lg:justify-center' : ''
           }`}>
-            <Globe className="w-4 h-4 flex-shrink-0" />
-            {!isCollapsed && (
-              <select className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-gray-600">
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
-                <option value="de">Deutsch</option>
-                <option value="zh">中文</option>
-                <option value="ja">日本語</option>
-                <option value="ko">한국어</option>
-                <option value="ru">Русский</option>
-                <option value="ar">العربية</option>
-                <option value="pt">Português</option>
-                <option value="it">Italiano</option>
-                <option value="nl">Nederlands</option>
-                <option value="tr">Türkçe</option>
-                <option value="hi">हिन्दी</option>
-                <option value="vi">Tiếng Việt</option>
-                <option value="th">ไทย</option>
-              </select>
-            )}
-          </div>
+            <Globe className="w-4 h-4" />
+            {!isCollapsed && <span>English</span>}
+          </button>
         </div>
       </aside>
     </>
