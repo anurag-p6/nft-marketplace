@@ -136,13 +136,13 @@ export default function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
   ];
 
   const categories = [
-    { icon: <Image />, label: 'Art', href: '/category/art', active: pathname === '/category/art' },
-    { icon: <Gamepad2 />, label: 'Gaming', href: '/category/gaming', active: pathname === '/category/gaming' },
-    { icon: <Music />, label: 'Music', href: '/category/music', active: pathname === '/category/music' },
-    { icon: <Camera />, label: 'Photography', href: '/category/photography', active: pathname === '/category/photography' },
-    { icon: <Users />, label: 'PFP', href: '/category/pfp', active: pathname === '/category/pfp' },
-    { icon: <Trophy />, label: 'Sports', href: '/category/sports', active: pathname === '/category/sports' },
-    { icon: <Globe />, label: 'Virtual Worlds', href: '/category/virtual-worlds', active: pathname === '/category/virtual-worlds' },
+    { icon: <Image />, label: 'Art', href: '/Category/art', active: pathname === '/Category/art' },
+    { icon: <Gamepad2 />, label: 'Gaming', href: '/Category/gaming', active: pathname === '/Category/gaming' },
+    { icon: <Music />, label: 'Music', href: '/Category/music', active: pathname === '/Category/music' },
+    { icon: <Camera />, label: 'Photography', href: '/Category/photography', active: pathname === '/Category/photography' },
+    { icon: <Users />, label: 'PFP', href: '/Category/pfp', active: pathname === '/Category/pfp' },
+    { icon: <Trophy />, label: 'Sports', href: '/Category/sports', active: pathname === '/Category/sports' },
+    { icon: <Globe />, label: 'Virtual Worlds', href: '/Category/virtualworld', active: pathname === '/Category/virtualworld' },
   ];
 
   const resources = [
@@ -243,13 +243,13 @@ export default function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
 
           {/* Categories */}
           <Section title="Categories" collapsed={isCollapsed}>
-            {categories.map((category) => (
+            {categories.map((Category) => (
               <CategoryItem
-                key={category.href}
-                icon={category.icon}
-                label={category.label}
-                href={category.href}
-                active={category.active}
+                key={Category.href}
+                icon={Category.icon}
+                label={Category.label}
+                href={Category.href}
+                active={Category.active}
                 collapsed={isCollapsed}
                 onClick={handleLinkClick}
               />

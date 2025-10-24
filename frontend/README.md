@@ -1,7 +1,56 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
-
+frontend/
+├── .claude/
+├── .next/
+├── abis/
+├── app/
+│   ├── api/
+│   │   └── upload/
+│   │       └── route.ts
+│   ├── Category/
+│   ├── component/                    # Components folder (singular)
+│   │   ├── Common.tsx
+│   │   ├── Header.tsx
+│   │   └── Sidebar.tsx
+│   ├── config/
+│   │   └── wagmi.ts
+│   ├── create/
+│   │   └── page.tsx
+│   ├── drops/
+│   ├── HoverSidebar/
+│   │   └── HoverSidebar.tsx
+│   ├── nft/
+│   ├── profile/
+│   │   └── page.tsx
+│   ├── stats/
+│   │   └── page.tsx
+│   ├── components/                   # Duplicate components folder (plural)
+│   │   ├── Loader.tsx
+│   │   └── NFTCard.tsx
+│   ├── config/                       # Duplicate config folder
+│   │   └── contracts.ts
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── not-found.tsx
+│   ├── page.tsx
+│   └── providers.tsx
+├── components/                       # Root components folder (empty)
+├── config/                          # Root config folder
+├── node_modules/
+├── public/
+├── utils/
+├── .gitignore
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── README.md
+├── tsconfig.json
+└── lib/
 First, run the development server:
 
 ```bash

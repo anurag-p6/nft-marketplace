@@ -99,7 +99,7 @@ export default function Header({ onMobileMenuClick }: HeaderProps) {
 
             {/* Explore - Hidden on mobile */}
             <Link
-              href="/"
+              href="/explore"
               className="hidden sm:flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
             >
               <Compass className="h-4 w-4" />
