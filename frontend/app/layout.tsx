@@ -31,11 +31,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <div className="flex min-h-screen bg-gray-50">
-            <Sidebar />
-            <div className="flex-1 flex flex-col">
-              <Header />
-              <main className="flex-1">
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            {/* Header - Fixed at top */}
+            <Header />
+            
+            {/* Main content below header */}
+            <div className="flex pt-16"> {/* Padding top equals header height */}
+              <Sidebar />
+              <main className="flex-1 p-6">
                 {children}
               </main>
             </div>

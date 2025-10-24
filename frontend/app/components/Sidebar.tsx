@@ -23,10 +23,8 @@ import {
   FileText,
   Mail,
   ChevronLeft,
-  Menu,
   X
 } from 'lucide-react';
-import HoverSidebar from '../HoverSidebar/HoverSidebar';
 
 interface SidebarItemProps {
   icon: React.ReactNode;
@@ -41,11 +39,11 @@ const SidebarItem = ({ icon, label, href, active, collapsed }: SidebarItemProps)
     href={href}
     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
       active
-        ? 'bg-blue-50 text-blue-600 border border-blue-200'
-        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+        ? 'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800'
+        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
     } ${collapsed ? 'justify-center' : ''}`}
   >
-    <div className={`w-5 h-5 flex-shrink-0 ${active ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
+    <div className={`w-5 h-5 flex-shrink-0 ${active ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'}`}>
       {icon}
     </div>
     {!collapsed && <span className="text-sm font-medium">{label}</span>}
@@ -57,21 +55,22 @@ interface CategoryItemProps {
   label: string;
   href: string;
   active?: boolean;
+  collapsed?: boolean;
 }
 
-const CategoryItem = ({ icon, label, href, active }: CategoryItemProps) => (
+const CategoryItem = ({ icon, label, href, active, collapsed }: CategoryItemProps) => (
   <Link
     href={href}
     className={`flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all ${
       active
-        ? 'bg-blue-50 text-blue-600 font-medium'
-        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-    }`}
+        ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-medium'
+        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+    } ${collapsed ? 'justify-center' : ''}`}
   >
-    <div className={`w-4 h-4 ${active ? 'text-blue-600' : 'text-gray-400'}`}>
+    <div className={`w-4 h-4 ${active ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400'}`}>
       {icon}
     </div>
-    <span>{label}</span>
+    {!collapsed && <span>{label}</span>}
   </Link>
 );
 
@@ -86,7 +85,7 @@ const Section = ({ title, collapsed, children }: SectionProps) => {
   
   return (
     <div className="mb-6">
-      <h3 className="px-3 mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+      <h3 className="px-3 mb-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
         {title}
       </h3>
       <div className="space-y-1">
@@ -109,13 +108,13 @@ export default function Sidebar() {
   ];
 
   const categories = [
-    { icon: <Image />, label: 'Art', href: '/Category/art', active: pathname === '/Category/art' },
-    { icon: <Gamepad2 />, label: 'Gaming', href: '/Category/gaming', active: pathname === '/Category/gaming' },
-    { icon: <Music />, label: 'Music', href: '/Category/music', active: pathname === '/Category/music' },
-    { icon: <Camera />, label: 'Photography', href: '/Category/photography', active: pathname === '/Category/photography' },
-    { icon: <Users />, label: 'PFP', href: '/Category/pfp', active: pathname === '/Category/pfp' },
-    { icon: <Trophy />, label: 'Sports', href: '/Category/sports', active: pathname === '/Category/sports' },
-    { icon: <Globe />, label: 'Virtual Worlds', href: '/Category/virtual-worlds', active: pathname === '/Category/virtual-worlds' },
+    { icon: <Image />, label: 'Art', href: '/category/art', active: pathname === '/category/art' },
+    { icon: <Gamepad2 />, label: 'Gaming', href: '/category/gaming', active: pathname === '/category/gaming' },
+    { icon: <Music />, label: 'Music', href: '/category/music', active: pathname === '/category/music' },
+    { icon: <Camera />, label: 'Photography', href: '/category/photography', active: pathname === '/category/photography' },
+    { icon: <Users />, label: 'PFP', href: '/category/pfp', active: pathname === '/category/pfp' },
+    { icon: <Trophy />, label: 'Sports', href: '/category/sports', active: pathname === '/category/sports' },
+    { icon: <Globe />, label: 'Virtual Worlds', href: '/category/virtual-worlds', active: pathname === '/category/virtual-worlds' },
   ];
 
   const resources = [
@@ -131,56 +130,23 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile Menu Toggle */}
-      <button
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
-      >
-        {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
-
       {/* Desktop Collapse Toggle */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="hidden lg:flex absolute -right-3 top-6 z-30 p-1.5 bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+        className="hidden lg:flex absolute -right-3 top-6 z-30 p-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
       >
         <ChevronLeft className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Overlay for mobile */}
-      {isMobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
-
       {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky top-0 h-screen bg-white border-r border-gray-200 overflow-y-auto transition-all duration-300 z-50 flex flex-col ${
+        className={`fixed lg:sticky top-0 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 overflow-y-auto transition-all duration-300 z-30 flex flex-col ${
           isMobileOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0'
         } ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
       >
         <div className={`flex-1 p-4 ${isCollapsed ? 'lg:px-3' : ''}`}>
-          {/* Logo */}
-          <div className={`flex items-center gap-3 mb-8 pt-2 ${isCollapsed ? 'lg:justify-center' : ''}`}>
-            <Link 
-              href="/" 
-              className={`flex items-center gap-3 group shrink-0 ${isCollapsed ? 'lg:justify-center' : ''}`}
-            >
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
-                </svg>
-              </div>
-              {!isCollapsed && (
-                <div>
-                  <span className="text-lg font-bold text-gray-900 block">NFT Market</span>
-                  <span className="text-xs text-gray-500 block">Digital Marketplace</span>
-                </div>
-              )}
-            </Link>
-          </div>
+          {/* Logo - Hidden when collapsed */}
+         
 
           {/* Main Navigation */}
           <Section title="Navigation" collapsed={isCollapsed}>
@@ -196,40 +162,38 @@ export default function Sidebar() {
             ))}
           </Section>
 
-          {/* Categories - Fixed: Remove collapsed prop from Section inside HoverSidebar */}
-          <HoverSidebar title="Browse by Category">
-            <Section title="Categories">
-              {categories.map((category) => (
-                <CategoryItem
-                  key={category.href}
-                  icon={category.icon}
-                  label={category.label}
-                  href={category.href}
-                  active={category.active}
-                />
-              ))}
-            </Section>
-          </HoverSidebar>
+          {/* Categories */}
+          <Section title="Categories" collapsed={isCollapsed}>
+            {categories.map((category) => (
+              <CategoryItem
+                key={category.href}
+                icon={category.icon}
+                label={category.label}
+                href={category.href}
+                active={category.active}
+                collapsed={isCollapsed}
+              />
+            ))}
+          </Section>
 
-          {/* Resources - Fixed: Remove collapsed prop from Section inside HoverSidebar */}
-          <HoverSidebar title="Resources">
-            <Section title="Resources">
-              {resources.map((resource) => (
-                <CategoryItem
-                  key={resource.href}
-                  icon={resource.icon}
-                  label={resource.label}
-                  href={resource.href}
-                  active={resource.active}
-                />
-              ))}
-            </Section>
-          </HoverSidebar>
+          {/* Resources */}
+          <Section title="Resources" collapsed={isCollapsed}>
+            {resources.map((resource) => (
+              <CategoryItem
+                key={resource.href}
+                icon={resource.icon}
+                label={resource.label}
+                href={resource.href}
+                active={resource.active}
+                collapsed={isCollapsed}
+              />
+            ))}
+          </Section>
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200">
-          <button className={`flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors ${
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+          <button className={`flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors ${
             isCollapsed ? 'lg:justify-center' : ''
           }`}>
             <Globe className="w-4 h-4" />
