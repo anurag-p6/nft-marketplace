@@ -7,7 +7,7 @@ import { getTokenOwner, getTokenURI } from '@/utils/fetchNFTs';
 import { getTokenListing, buyNFT } from '@/utils/marketplace';
 import { NFTMetadata } from '@/utils/ipfs';
 import { contracts } from '@/config/contracts';
-import Loader from '@/components/Loader'; 
+import Loader from '@/app/components/Loader'; 
 
 export default function NFTDetailPage() {
   const params = useParams();

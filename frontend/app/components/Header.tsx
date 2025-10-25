@@ -2,10 +2,11 @@
 
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
-import { Search, Plus, Compass, User, Sun, Moon, Menu } from 'lucide-react';
+import { Search, Plus, Compass, User, Menu } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 interface HeaderProps {
   onMobileMenuClick: () => void;
@@ -13,35 +14,13 @@ interface HeaderProps {
 
 export default function Header({ onMobileMenuClick }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
   const router = useRouter();
   const { address } = useAccount();
-
-  useEffect(() => {
-    const isDark = localStorage.getItem('darkMode') === 'true' || 
-      (window.matchMedia('(prefers-color-scheme: dark)').matches && !localStorage.getItem('darkMode'));
-    setDarkMode(isDark);
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', newDarkMode.toString());
-    
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
     }
   };
 
@@ -88,14 +67,8 @@ export default function Header({ onMobileMenuClick }: HeaderProps) {
 
           {/* Navigation Items */}
           <div className="flex items-center gap-2">
-            {/* Dark/Light Mode Toggle */}
-            <button
-              onClick={toggleDarkMode}
-              className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {/* Explore - Hidden on mobile */}
             <Link

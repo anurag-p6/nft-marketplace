@@ -1,16 +1,102 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import NFTCard from '@/components/NFTCard';
+import { useEffect, useState, ReactNode } from 'react';
+import NFTCard from '@/app/components/NFTCard';
 import { getAllNFTs, NFTData } from '@/utils/fetchNFTs';
 import Link from 'next/link';
-import Loader from '@/components/Loader';
-
+import Loader from '@/app/components/Loader';
 import { TrendingUp, Users, Zap, Shield, Star, Award, Clock, Sparkles, ArrowRight, CheckCircle, Flame } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+
+// Animation variants
+const fadeInUp = {
+  initial: { opacity: 0, y: 60 },
+  animate: { opacity: 1, y: 0 },
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const scaleIn = {
+  initial: { opacity: 0, scale: 0.8 },
+  animate: { opacity: 1, scale: 1 },
+};
+
+const slideInLeft = {
+  initial: { opacity: 0, x: -60 },
+  animate: { opacity: 1, x: 0 },
+};
+
+const slideInRight = {
+  initial: { opacity: 0, x: 60 },
+  animate: { opacity: 1, x: 0 },
+};
+
+// Define proper types for the animated components
+interface AnimatedSectionProps {
+  children: ReactNode;
+  className?: string;
+}
+
+interface AnimatedGridProps {
+  children: ReactNode;
+  className?: string;
+}
+
+// Extended NFTData type to include category
+interface ExtendedNFTData extends NFTData {
+  category?: string;
+}
+
+// Animated component wrapper
+function AnimatedSection({ children, className = "" }: AnimatedSectionProps) {
+  const [ref, inView] = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="initial"
+      animate={inView ? "animate" : "initial"}
+      variants={fadeInUp}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function AnimatedGrid({ children, className = "" }: AnimatedGridProps) {
+  const [ref, inView] = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="initial"
+      animate={inView ? "animate" : "initial"}
+      variants={staggerContainer}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export default function Home() {
-  const [nfts, setNfts] = useState<NFTData[]>([]);
-  const [trendingNfts, setTrendingNfts] = useState<NFTData[]>([]);
+  const [nfts, setNfts] = useState<ExtendedNFTData[]>([]);
+  const [trendingNfts, setTrendingNfts] = useState<ExtendedNFTData[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
 
@@ -19,9 +105,38 @@ export default function Home() {
       setLoading(true);
       try {
         const allNFTs = await getAllNFTs();
-        setNfts(allNFTs);
-        // Simulate trending NFTs (first 8 for demo)
-        setTrendingNfts(allNFTs.slice(0, 8));
+        
+        // Add category based on metadata analysis
+        const nftsWithCategory: ExtendedNFTData[] = allNFTs.map(nft => {
+          const name = nft.metadata?.name?.toLowerCase() || '';
+          const description = nft.metadata?.description?.toLowerCase() || '';
+          const attributes = nft.metadata?.attributes || [];
+
+          let category = 'art'; // Default category
+
+          // Determine category based on content
+          if (name.includes('game') || description.includes('game') || 
+              name.includes('character') || description.includes('character') ||
+              attributes.some(attr => String(attr?.value).toLowerCase().includes('game'))) {
+            category = 'gaming';
+          } else if (name.includes('music') || description.includes('music') ||
+                     name.includes('song') || description.includes('song') ||
+                     attributes.some(attr => String(attr?.value).toLowerCase().includes('music'))) {
+            category = 'music';
+          } else if (name.includes('photo') || description.includes('photo') ||
+                     name.includes('camera') || description.includes('camera') ||
+                     attributes.some(attr => String(attr?.value).toLowerCase().includes('photo'))) {
+            category = 'photography';
+          }
+
+          return {
+            ...nft,
+            category
+          };
+        });
+
+        setNfts(nftsWithCategory);
+        setTrendingNfts(nftsWithCategory.slice(0, 8));
       } catch (error) {
         console.error('Error fetching NFTs:', error);
       } finally {
@@ -96,23 +211,51 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <main className="container mx-auto px-4 py-8">
         {/* Hero Section */}
-        <section className="text-center py-16 lg:py-24 animate-fade-in">
+        <motion.section 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-center py-16 lg:py-24"
+        >
           <div className="max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 mb-6">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 mb-6"
+            >
               <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
                 The Future of Digital Collectibles is Here
               </span>
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight">
+            </motion.div>
+            
+            <motion.h1 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight"
+            >
               Discover, Collect, and Sell
               <span className="block">Extraordinary NFTs</span>
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+            </motion.h1>
+            
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed"
+            >
               The world's first and largest digital marketplace for crypto collectibles and non-fungible tokens. 
               Buy, sell, and discover exclusive digital assets.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            </motion.p>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            >
               <Link href="/create">
                 <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-purple-300 transform hover:scale-105 flex items-center gap-2">
                   <Sparkles className="w-5 h-5" />
@@ -125,16 +268,18 @@ export default function Home() {
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </Link>
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Stats Section */}
-        <section className="py-16">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <AnimatedSection className="py-16">
+          <AnimatedGrid className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, index) => (
-              <div 
+              <motion.div
                 key={index}
+                variants={scaleIn}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 text-center hover:shadow-xl transition-all duration-300 hover:scale-105"
               >
                 <div className="flex justify-center items-center mb-3">
@@ -144,25 +289,31 @@ export default function Home() {
                 </div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{stat.value}</div>
                 <div className="text-gray-600 dark:text-gray-400 text-sm">{stat.label}</div>
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </section>
+          </AnimatedGrid>
+        </AnimatedSection>
 
         {/* Features Section */}
-        <section className="py-16">
-          <div className="text-center mb-12">
+        <AnimatedSection className="py-16">
+          <motion.div 
+            variants={fadeInUp}
+            className="text-center mb-12"
+          >
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Why Choose Our Platform
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               Experience the next generation of NFT trading with our cutting-edge features
             </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          </motion.div>
+          
+          <AnimatedGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
-              <div 
+              <motion.div
                 key={index}
+                variants={fadeInUp}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300 hover:scale-105 group"
               >
                 <div className="p-3 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-600 dark:text-purple-400 w-fit mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -174,15 +325,15 @@ export default function Home() {
                 <p className="text-gray-600 dark:text-gray-400">
                   {feature.description}
                 </p>
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </section>
+          </AnimatedGrid>
+        </AnimatedSection>
 
         {/* Trending NFTs Section */}
         {trendingNfts.length > 0 && (
-          <section className="py-16">
-            <div className="flex justify-between items-center mb-8">
+          <AnimatedSection className="py-16">
+            <motion.div variants={fadeInUp} className="flex justify-between items-center mb-8">
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Flame className="w-6 h-6 text-orange-500" />
@@ -198,32 +349,48 @@ export default function Home() {
                 View all trending
                 <ArrowRight className="w-4 h-4" />
               </Link>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {trendingNfts.slice(0, 4).map((nft) => (
-                <NFTCard key={nft.tokenId} nft={nft} showOwner={true} />
+            </motion.div>
+            
+            <AnimatedGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {trendingNfts.slice(0, 4).map((nft, index) => (
+                <motion.div
+                  key={nft.tokenId}
+                  variants={fadeInUp}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <NFTCard nft={nft} showOwner={true} />
+                </motion.div>
               ))}
-            </div>
-          </section>
+            </AnimatedGrid>
+          </AnimatedSection>
         )}
 
         {/* How It Works Section */}
-        <section className="py-16 bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700">
-          <div className="text-center mb-12">
+        <AnimatedSection className="py-16 bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700">
+          <motion.div variants={fadeInUp} className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               How It Works
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               Get started in just three simple steps
             </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          </motion.div>
+          
+          <AnimatedGrid className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {steps.map((step, index) => (
-              <div key={index} className="text-center group">
+              <motion.div
+                key={index}
+                variants={fadeInUp}
+                transition={{ duration: 0.6, delay: index * 0.2 }}
+                className="text-center group"
+              >
                 <div className="relative mb-6">
-                  <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold group-hover:scale-110 transition-transform duration-300">
+                  <motion.div 
+                    whileHover={{ scale: 1.1 }}
+                    className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold transition-transform duration-300"
+                  >
                     {step.number}
-                  </div>
+                  </motion.div>
                   {index < steps.length - 1 && (
                     <div className="hidden md:block absolute top-10 left-1/2 w-full h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 transform translate-x-1/2"></div>
                   )}
@@ -234,14 +401,14 @@ export default function Home() {
                 <p className="text-gray-600 dark:text-gray-400">
                   {step.description}
                 </p>
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </section>
+          </AnimatedGrid>
+        </AnimatedSection>
 
         {/* All NFTs Section */}
-        <section className="py-16">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+        <AnimatedSection className="py-16">
+          <motion.div variants={fadeInUp} className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 Featured NFTs
@@ -254,13 +421,18 @@ export default function Home() {
               View all NFTs
               <ArrowRight className="w-4 h-4" />
             </Link>
-          </div>
+          </motion.div>
 
           {/* Category Filters */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          <motion.div 
+            variants={fadeInUp}
+            className="flex flex-wrap gap-2 mb-8"
+          >
             {categories.map((category) => (
-              <button
+              <motion.button
                 key={category.id}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setActiveCategory(category.id)}
                 className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
                   activeCategory === category.id
@@ -269,20 +441,30 @@ export default function Home() {
                 }`}
               >
                 {category.name} ({category.count})
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
           
           {loading ? (
             <Loader message="Loading NFTs..." />
           ) : filteredNfts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredNfts.map((nft) => (
-                <NFTCard key={nft.tokenId} nft={nft} showOwner={true} />
+            <AnimatedGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredNfts.map((nft, index) => (
+                <motion.div
+                  key={nft.tokenId}
+                  variants={fadeInUp}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <NFTCard nft={nft} showOwner={true} />
+                </motion.div>
               ))}
-            </div>
+            </AnimatedGrid>
           ) : (
-            <div className="text-center py-16 animate-fade-in bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700"
+            >
               <svg
                 className="mx-auto h-24 w-24 text-gray-400 dark:text-gray-500"
                 fill="none"
@@ -302,17 +484,24 @@ export default function Home() {
                 }
               </p>
               <Link href="/create">
-                <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-purple-300 transform hover:scale-105">
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-purple-300"
+                >
                   Create Your First NFT
-                </button>
+                </motion.button>
               </Link>
-            </div>
+            </motion.div>
           )}
-        </section>
+        </AnimatedSection>
 
         {/* CTA Section */}
-        <section className="py-16 text-center">
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-8 sm:p-12 text-white">
+        <AnimatedSection className="py-16 text-center">
+          <motion.div 
+            variants={scaleIn}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-8 sm:p-12 text-white"
+          >
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
               Ready to Join the NFT Revolution?
             </h2>
@@ -321,18 +510,26 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/create">
-                <button className="px-8 py-4 bg-white text-purple-600 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-8 py-4 bg-white text-purple-600 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
                   Start Creating
-                </button>
+                </motion.button>
               </Link>
               <Link href="/explore">
-                <button className="px-8 py-4 border border-white text-white rounded-xl font-semibold hover:bg-white hover:bg-opacity-10 transition-all duration-300">
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-8 py-4 border border-white text-white rounded-xl font-semibold hover:bg-white hover:bg-opacity-10 transition-all duration-300"
+                >
                   Explore Collections
-                </button>
+                </motion.button>
               </Link>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </AnimatedSection>
       </main>
     </div>
   );

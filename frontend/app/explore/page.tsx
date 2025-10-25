@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import NFTCard from '@/components/NFTCard';
+import { useState, useEffect, ReactNode } from 'react';
+import NFTCard from '@/app/components/NFTCard';
 import { getAllNFTs, NFTData } from '../../utils/fetchNFTs';
-import Loader from '@/components/Loader';
+import Loader from '@/app/components/Loader';
 import { 
   Search, 
   Filter, 
@@ -11,12 +11,98 @@ import {
   List, 
   SlidersHorizontal,
   X,
-  Flame
+  Flame,
+  Sparkles,
+  Zap,
+  TrendingUp,
+  ArrowRight
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+
+// Animation variants
+const fadeInUp = {
+  initial: { opacity: 0, y: 40 },
+  animate: { opacity: 1, y: 0 },
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const scaleIn = {
+  initial: { opacity: 0, scale: 0.9 },
+  animate: { opacity: 1, scale: 1 },
+};
+
+const slideInLeft = {
+  initial: { opacity: 0, x: -20 },
+  animate: { opacity: 1, x: 0 },
+};
+
+// Define proper types for animated components
+interface AnimatedSectionProps {
+  children: ReactNode;
+  className?: string;
+}
+
+interface AnimatedGridProps {
+  children: ReactNode;
+  className?: string;
+}
+
+// Extended NFTData type to include category
+interface ExtendedNFTData extends NFTData {
+  category?: string;
+}
+
+// Animated component wrappers
+function AnimatedSection({ children, className = "" }: AnimatedSectionProps) {
+  const [ref, inView] = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="initial"
+      animate={inView ? "animate" : "initial"}
+      variants={fadeInUp}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function AnimatedGrid({ children, className = "" }: AnimatedGridProps) {
+  const [ref, inView] = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="initial"
+      animate={inView ? "animate" : "initial"}
+      variants={staggerContainer}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export default function Explore() {
-  const [nfts, setNfts] = useState<NFTData[]>([]);
-  const [filteredNfts, setFilteredNfts] = useState<NFTData[]>([]);
+  const [nfts, setNfts] = useState<ExtendedNFTData[]>([]);
+  const [filteredNfts, setFilteredNfts] = useState<ExtendedNFTData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -25,21 +111,20 @@ export default function Explore() {
   const [showFilters, setShowFilters] = useState(false);
 
   const categories = [
-    { id: 'all', name: 'All Items', count: nfts.length },
-    { id: 'art', name: 'Art', count: nfts.filter(nft => nft.category === 'art').length },
-    { id: 'gaming', name: 'Gaming', count: nfts.filter(nft => nft.category === 'gaming').length },
-    { id: 'music', name: 'Music', count: nfts.filter(nft => nft.category === 'music').length },
-    { id: 'photography', name: 'Photography', count: nfts.filter(nft => nft.category === 'photography').length },
-    { id: 'pfp', name: 'PFP', count: nfts.filter(nft => nft.category === 'pfp').length },
-    { id: 'sports', name: 'Sports', count: nfts.filter(nft => nft.category === 'sports').length },
-    { id: 'virtual-worlds', name: 'Virtual Worlds', count: nfts.filter(nft => nft.category === 'virtual-worlds').length },
+    { id: 'all', name: 'All Items', count: nfts.length, icon: '✨' },
+    { id: 'art', name: 'Art', count: nfts.filter(nft => nft.category === 'art').length, icon: '🎨' },
+    { id: 'gaming', name: 'Gaming', count: nfts.filter(nft => nft.category === 'gaming').length, icon: '🎮' },
+    { id: 'music', name: 'Music', count: nfts.filter(nft => nft.category === 'music').length, icon: '🎵' },
+    { id: 'photography', name: 'Photography', count: nfts.filter(nft => nft.category === 'photography').length, icon: '📸' },
+    { id: 'pfp', name: 'PFP', count: nfts.filter(nft => nft.category === 'pfp').length, icon: '👤' },
+    { id: 'sports', name: 'Sports', count: nfts.filter(nft => nft.category === 'sports').length, icon: '⚽' },
+    { id: 'virtual-worlds', name: 'Virtual Worlds', count: nfts.filter(nft => nft.category === 'virtual-worlds').length, icon: '🌐' },
   ];
 
   const sortOptions = [
-    { id: 'recent', name: 'Recently Listed' },
-    { id: 'price-low', name: 'Price: Low to High' },
-    { id: 'price-high', name: 'Price: High to Low' },
-    { id: 'most-viewed', name: 'Most Viewed' },
+    { id: 'recent', name: 'Recently Listed', icon: <Zap className="w-4 h-4" /> },
+    { id: 'price-low', name: 'Price: Low to High', icon: <TrendingUp className="w-4 h-4" /> },
+    { id: 'price-high', name: 'Price: High to Low', icon: <Flame className="w-4 h-4" /> },
   ];
 
   useEffect(() => {
@@ -47,8 +132,49 @@ export default function Explore() {
       setLoading(true);
       try {
         const allNFTs = await getAllNFTs();
-        setNfts(allNFTs);
-        setFilteredNfts(allNFTs);
+        
+        // Add category based on metadata analysis
+        const nftsWithCategory: ExtendedNFTData[] = allNFTs.map(nft => {
+          const name = nft.metadata?.name?.toLowerCase() || '';
+          const description = nft.metadata?.description?.toLowerCase() || '';
+          const attributes = nft.metadata?.attributes || [];
+
+          let category = 'art'; // Default category
+
+          // Determine category based on content
+          if (name.includes('game') || description.includes('game') || 
+              name.includes('character') || description.includes('character') ||
+              attributes.some(attr => String(attr?.value).toLowerCase().includes('game'))) {
+            category = 'gaming';
+          } else if (name.includes('music') || description.includes('music') ||
+                     name.includes('song') || description.includes('song') ||
+                     attributes.some(attr => String(attr?.value).toLowerCase().includes('music'))) {
+            category = 'music';
+          } else if (name.includes('photo') || description.includes('photo') ||
+                     name.includes('camera') || description.includes('camera') ||
+                     attributes.some(attr => String(attr?.value).toLowerCase().includes('photo'))) {
+            category = 'photography';
+          } else if (name.includes('sport') || description.includes('sport') ||
+                     attributes.some(attr => String(attr?.value).toLowerCase().includes('sport'))) {
+            category = 'sports';
+          } else if (name.includes('virtual') || description.includes('virtual') ||
+                     name.includes('world') || description.includes('world') ||
+                     attributes.some(attr => String(attr?.value).toLowerCase().includes('virtual'))) {
+            category = 'virtual-worlds';
+          } else if (name.includes('pfp') || description.includes('pfp') ||
+                     name.includes('profile') || description.includes('profile') ||
+                     attributes.some(attr => String(attr?.value).toLowerCase().includes('pfp'))) {
+            category = 'pfp';
+          }
+
+          return {
+            ...nft,
+            category
+          };
+        });
+
+        setNfts(nftsWithCategory);
+        setFilteredNfts(nftsWithCategory);
       } catch (error) {
         console.error('Error fetching NFTs:', error);
       } finally {
@@ -65,9 +191,9 @@ export default function Explore() {
     // Apply search filter
     if (searchQuery) {
       results = results.filter(nft =>
-        nft.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        nft.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        nft.creator.toLowerCase().includes(searchQuery.toLowerCase())
+        nft.metadata?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        nft.metadata?.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        nft.owner?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -80,14 +206,12 @@ export default function Explore() {
     results.sort((a, b) => {
       switch (sortBy) {
         case 'price-low':
-          return a.price - b.price;
+          return (a.listing?.priceUSD || 0) - (b.listing?.priceUSD || 0);
         case 'price-high':
-          return b.price - a.price;
-        case 'most-viewed':
-          return (b.views || 0) - (a.views || 0);
+          return (b.listing?.priceUSD || 0) - (a.listing?.priceUSD || 0);
         case 'recent':
         default:
-          return (b.createdAt || 0) - (a.createdAt || 0);
+          return parseInt(b.tokenId) - parseInt(a.tokenId);
       }
     });
 
@@ -100,28 +224,97 @@ export default function Explore() {
     setSortBy('recent');
   };
 
+  const trendingCollections = [
+    { name: 'CryptoPunks', volume: '12.5K', change: '+12%', icon: '👾' },
+    { name: 'Bored Ape', volume: '8.2K', change: '+8%', icon: '🐵' },
+    { name: 'Art Blocks', volume: '6.7K', change: '+15%', icon: '🎨' },
+    { name: 'Doodles', volume: '5.3K', change: '+22%', icon: '🖍️' },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8">
         {/* Hero Section */}
-        <section className="text-center py-12">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <motion.section 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-center py-12"
+        >
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex justify-center items-center gap-3 mb-4"
+          >
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+              <Sparkles className="w-8 h-8" />
+            </div>
+          </motion.div>
+          
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"
+          >
             Explore NFTs
-          </h1>
-          <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+          </motion.h1>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto"
+          >
             Discover thousands of unique digital assets from talented creators worldwide
-          </p>
-        </section>
+          </motion.p>
+        </motion.section>
+
+        {/* Trending Collections */}
+        <AnimatedSection className="mb-8">
+          <motion.div variants={fadeInUp} className="flex items-center gap-2 mb-4">
+            <Flame className="w-6 h-6 text-orange-500" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Trending Collections</h2>
+          </motion.div>
+          <AnimatedGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {trendingCollections.map((collection, index) => (
+              <motion.div
+                key={index}
+                variants={scaleIn}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ scale: 1.05, y: -5 }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 cursor-pointer group"
+              >
+                <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-300">
+                  {collection.icon}
+                </div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                  {collection.name}
+                </h3>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {collection.volume} ETH
+                  </span>
+                  <span className="text-sm text-green-500 font-medium">
+                    {collection.change}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatedGrid>
+        </AnimatedSection>
 
         {/* Search and Controls */}
-        <section className="mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 mb-6">
+        <AnimatedSection className="mb-8">
+          <motion.div variants={fadeInUp} className="flex flex-col lg:flex-row gap-4 mb-6">
             {/* Search Bar */}
             <div className="flex-1 relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
               </div>
-              <input
+              <motion.input
+                whileFocus={{ scale: 1.02 }}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -131,7 +324,9 @@ export default function Explore() {
             </div>
 
             {/* Sort By */}
-            <select
+            <motion.select
+              whileHover={{ scale: 1.02 }}
+              whileFocus={{ scale: 1.02 }}
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -141,86 +336,122 @@ export default function Explore() {
                   {option.name}
                 </option>
               ))}
-            </select>
+            </motion.select>
 
             {/* Filter Toggle */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <SlidersHorizontal className="w-4 h-4" />
               Filters
               {showFilters && <X className="w-4 h-4" />}
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
 
           {/* Categories */}
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                  selectedCategory === category.id
-                    ? 'bg-purple-600 text-white shadow-lg'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700'
-                }`}
-              >
-                {category.name} ({category.count})
-              </button>
-            ))}
-          </div>
-        </section>
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-wrap gap-2"
+            >
+              {categories.map((category) => (
+                <motion.button
+                  key={category.id}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 ${
+                    selectedCategory === category.id
+                      ? 'bg-purple-600 text-white shadow-lg'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700'
+                  }`}
+                >
+                  <span className="text-sm">{category.icon}</span>
+                  {category.name} 
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    selectedCategory === category.id
+                      ? 'bg-white/20 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                  }`}>
+                    {category.count}
+                  </span>
+                </motion.button>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        </AnimatedSection>
 
         {/* View Controls */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {filteredNfts.length} of {nfts.length} items
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400'
-                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-            >
-              <Grid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400'
-                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <AnimatedSection>
+          <motion.div variants={fadeInUp} className="flex justify-between items-center mb-6">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {filteredNfts.length} of {nfts.length} items
+            </div>
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-lg transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400'
+                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                <Grid className="w-4 h-4" />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-lg transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400'
+                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                <List className="w-4 h-4" />
+              </motion.button>
+            </div>
+          </motion.div>
+        </AnimatedSection>
 
         {/* NFT Grid */}
-        <section>
+        <AnimatedSection>
           {loading ? (
             <Loader message="Loading NFTs..." />
           ) : filteredNfts.length > 0 ? (
-            <div className={
+            <AnimatedGrid className={
               viewMode === 'grid' 
                 ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                 : "grid grid-cols-1 gap-6"
             }>
-              {filteredNfts.map((nft) => (
-                <NFTCard 
-                  key={nft.tokenId} 
-                  nft={nft} 
-                  showOwner={true}
-                />
+              {filteredNfts.map((nft, index) => (
+                <motion.div
+                  key={nft.tokenId}
+                  variants={fadeInUp}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02, y: -5 }}
+                >
+                  <NFTCard 
+                    nft={nft} 
+                    showOwner={true}
+                  />
+                </motion.div>
               ))}
-            </div>
+            </AnimatedGrid>
           ) : (
-            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700"
+            >
               <Search className="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500 mb-4" />
               <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
                 No NFTs found
@@ -228,23 +459,30 @@ export default function Explore() {
               <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Try adjusting your search criteria or filters
               </p>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={clearFilters}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-500 hover:to-pink-500 transition-all duration-300"
               >
                 Clear Filters
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           )}
-        </section>
+        </AnimatedSection>
 
         {/* Load More */}
         {filteredNfts.length > 0 && (
-          <div className="text-center mt-12">
-            <button className="px-8 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300">
+          <AnimatedSection className="text-center mt-12">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-8 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 flex items-center gap-2 mx-auto"
+            >
               Load More NFTs
-            </button>
-          </div>
+              <ArrowRight className="w-4 h-4" />
+            </motion.button>
+          </AnimatedSection>
         )}
       </div>
     </div>

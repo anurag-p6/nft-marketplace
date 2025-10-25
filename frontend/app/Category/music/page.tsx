@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import NFTCard from '@/components/NFTCard';
+import { useState, useEffect, useRef, ReactNode } from 'react';
+import NFTCard from '@/app/components/NFTCard';
 import { getAllNFTs, NFTData } from '@/utils/fetchNFTs';
-import Loader from '@/components/Loader';
+import Loader from '@/app/components/Loader';
 import { 
   Search, 
   Filter, 
@@ -19,8 +19,92 @@ import {
   Users,
   Sparkles
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
 
-function AudioPlayer({ audioUrl }: { audioUrl?: string }) {
+// Animation variants
+const fadeInUp = {
+  initial: { opacity: 0, y: 40 },
+  animate: { opacity: 1, y: 0 },
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const scaleIn = {
+  initial: { opacity: 0, scale: 0.9 },
+  animate: { opacity: 1, scale: 1 },
+};
+
+// Define proper types for the animated components
+interface AnimatedSectionProps {
+  children: ReactNode;
+  className?: string;
+}
+
+interface AnimatedGridProps {
+  children: ReactNode;
+  className?: string;
+}
+
+// Use the original NFTData type directly instead of extending
+type MusicNFTData = NFTData & {
+  metadata: {
+    audio?: string; // Add audio property for music NFTs
+  };
+};
+
+// Audio player props interface
+interface AudioPlayerProps {
+  audioUrl?: string;
+}
+
+// Animated component wrappers
+function AnimatedSection({ children, className = "" }: AnimatedSectionProps) {
+  const [ref, inView] = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="initial"
+      animate={inView ? "animate" : "initial"}
+      variants={fadeInUp}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function AnimatedGrid({ children, className = "" }: AnimatedGridProps) {
+  const [ref, inView] = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="initial"
+      animate={inView ? "animate" : "initial"}
+      variants={staggerContainer}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function AudioPlayer({ audioUrl }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -70,7 +154,9 @@ function AudioPlayer({ audioUrl }: { audioUrl?: string }) {
         onPause={() => setIsPlaying(false)}
       />
       
-      <button
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
         onClick={togglePlay}
         disabled={!audioUrl}
         className={`flex items-center justify-center w-8 h-8 rounded-full transition-all ${
@@ -80,13 +166,16 @@ function AudioPlayer({ audioUrl }: { audioUrl?: string }) {
         }`}
       >
         {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-      </button>
+      </motion.button>
 
       <div className="flex-1">
         <div className="w-full bg-gray-200 rounded-full h-1.5">
-          <div
+          <motion.div
             className="bg-purple-600 h-1.5 rounded-full transition-all"
             style={{ width: `${progress}%` }}
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.1 }}
           />
         </div>
         <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -99,8 +188,8 @@ function AudioPlayer({ audioUrl }: { audioUrl?: string }) {
 }
 
 export default function Music() {
-  const [nfts, setNfts] = useState<NFTData[]>([]);
-  const [filteredNfts, setFilteredNfts] = useState<NFTData[]>([]);
+  const [nfts, setNfts] = useState<MusicNFTData[]>([]);
+  const [filteredNfts, setFilteredNfts] = useState<MusicNFTData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent');
@@ -120,28 +209,28 @@ export default function Music() {
       nft.metadata?.name?.toLowerCase().includes('electronic') || 
       nft.metadata?.description?.toLowerCase().includes('electronic') ||
       nft.metadata?.attributes?.some(attr => 
-        attr.value?.toString().toLowerCase().includes('electronic')
+        String(attr?.value).toLowerCase().includes('electronic')
       )
     ).length },
     { id: 'hiphop', name: 'Hip Hop', count: nfts.filter(nft => 
       nft.metadata?.name?.toLowerCase().includes('hip hop') || 
       nft.metadata?.description?.toLowerCase().includes('hip hop') ||
       nft.metadata?.attributes?.some(attr => 
-        attr.value?.toString().toLowerCase().includes('hip hop')
+        String(attr?.value).toLowerCase().includes('hip hop')
       )
     ).length },
     { id: 'rock', name: 'Rock', count: nfts.filter(nft => 
       nft.metadata?.name?.toLowerCase().includes('rock') || 
       nft.metadata?.description?.toLowerCase().includes('rock') ||
       nft.metadata?.attributes?.some(attr => 
-        attr.value?.toString().toLowerCase().includes('rock')
+        String(attr?.value).toLowerCase().includes('rock')
       )
     ).length },
     { id: 'classical', name: 'Classical', count: nfts.filter(nft => 
       nft.metadata?.name?.toLowerCase().includes('classical') || 
       nft.metadata?.description?.toLowerCase().includes('classical') ||
       nft.metadata?.attributes?.some(attr => 
-        attr.value?.toString().toLowerCase().includes('classical')
+        String(attr?.value).toLowerCase().includes('classical')
       )
     ).length },
   ];
@@ -152,14 +241,11 @@ export default function Music() {
       try {
         const allNFTs = await getAllNFTs();
         
-        // Filter for music NFTs based on metadata analysis
         const musicNFTs = allNFTs.filter(nft => {
-          // Check if NFT has music-related metadata
           const name = nft.metadata?.name?.toLowerCase() || '';
           const description = nft.metadata?.description?.toLowerCase() || '';
           const attributes = nft.metadata?.attributes || [];
           
-          // Music-related keywords
           const musicKeywords = [
             'music', 'song', 'track', 'audio', 'sound', 'beat',
             'melody', 'rhythm', 'instrument', 'vocal', 'album',
@@ -170,11 +256,21 @@ export default function Music() {
           return musicKeywords.some(keyword => 
             name.includes(keyword) || 
             description.includes(keyword) ||
-            attributes.some(attr => 
-              attr.value?.toString().toLowerCase().includes(keyword)
-            )
+            attributes.some(attr => {
+              const attrValue = attr?.value?.toString().toLowerCase() || '';
+              return attrValue.includes(keyword);
+            })
           );
-        });
+        }).map(nft => {
+          // Add audio property to metadata for potential future use
+          return {
+            ...nft,
+            metadata: {
+              ...nft.metadata,
+              audio: nft.metadata?.image // Use image as placeholder for audio URL
+            }
+          };
+        }) as MusicNFTData[];
         
         setNfts(musicNFTs);
         setFilteredNfts(musicNFTs);
@@ -191,7 +287,6 @@ export default function Music() {
   useEffect(() => {
     let results = nfts;
 
-    // Apply search filter
     if (searchQuery) {
       results = results.filter(nft =>
         nft.metadata?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -200,7 +295,6 @@ export default function Music() {
       );
     }
 
-    // Apply genre filter
     if (selectedGenre !== 'all') {
       results = results.filter(nft => {
         const name = nft.metadata?.name?.toLowerCase() || '';
@@ -211,26 +305,25 @@ export default function Music() {
           case 'electronic':
             return name.includes('electronic') || 
                    description.includes('electronic') ||
-                   attributes.some(attr => attr.value?.toString().toLowerCase().includes('electronic'));
+                   attributes.some(attr => String(attr?.value).toLowerCase().includes('electronic'));
           case 'hiphop':
             return name.includes('hip hop') || 
                    description.includes('hip hop') ||
-                   attributes.some(attr => attr.value?.toString().toLowerCase().includes('hip hop'));
+                   attributes.some(attr => String(attr?.value).toLowerCase().includes('hip hop'));
           case 'rock':
             return name.includes('rock') || 
                    description.includes('rock') ||
-                   attributes.some(attr => attr.value?.toString().toLowerCase().includes('rock'));
+                   attributes.some(attr => String(attr?.value).toLowerCase().includes('rock'));
           case 'classical':
             return name.includes('classical') || 
                    description.includes('classical') ||
-                   attributes.some(attr => attr.value?.toString().toLowerCase().includes('classical'));
+                   attributes.some(attr => String(attr?.value).toLowerCase().includes('classical'));
           default:
             return true;
         }
       });
     }
 
-    // Apply sorting
     results.sort((a, b) => {
       switch (sortBy) {
         case 'price-low':
@@ -268,14 +361,13 @@ export default function Music() {
     { name: 'Urban Beats', tracks: 12, artist: 'City Sounds', icon: '🎤' },
   ];
 
-  // Demo audio tracks for preview
   const demoAudioTracks = [
     {
       id: '1',
       title: 'Aurora Beats',
       artist: 'S. Vega',
       duration: '2:45',
-      audioUrl: '/audio/sample1.mp3' // You can add actual audio files in public/audio/
+      audioUrl: '/audio/sample1.mp3'
     },
     {
       id: '2',
@@ -297,51 +389,76 @@ export default function Music() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8">
         {/* Hero Section */}
-        <section className="text-center py-12">
-          <div className="flex justify-center items-center gap-3 mb-4">
+        <motion.section 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-center py-12"
+        >
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex justify-center items-center gap-3 mb-4"
+          >
             <div className="p-3 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 text-white">
               <MusicIcon className="w-8 h-8" />
             </div>
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          </motion.div>
+          
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"
+          >
             Music NFTs
-          </h1>
-          <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+          </motion.h1>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto"
+          >
             Discover exclusive audio collectibles, albums, and music drops with built-in royalty systems. 
             Own a piece of music history and support artists directly.
-          </p>
+          </motion.p>
           
           {/* Music Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto mb-8">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{musicStats.totalTracks}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Music Tracks</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">${musicStats.totalVolume.toFixed(0)}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Volume</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">${musicStats.averagePrice.toFixed(2)}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Avg Price</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{musicStats.artists}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Artists</div>
-            </div>
-          </div>
-        </section>
+          <AnimatedGrid className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto mb-8">
+            {[
+              { value: musicStats.totalTracks, label: 'Music Tracks' },
+              { value: `$${musicStats.totalVolume.toFixed(0)}`, label: 'Total Volume' },
+              { value: `$${musicStats.averagePrice.toFixed(2)}`, label: 'Avg Price' },
+              { value: musicStats.artists, label: 'Artists' }
+            ].map((stat, index) => (
+              <motion.div
+                key={index}
+                variants={scaleIn}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 hover:scale-105"
+              >
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</div>
+              </motion.div>
+            ))}
+          </AnimatedGrid>
+        </motion.section>
 
         {/* Featured Albums */}
-        <section className="mb-12">
-          <div className="flex items-center gap-2 mb-6">
+        <AnimatedSection className="mb-12">
+          <motion.div variants={fadeInUp} className="flex items-center gap-2 mb-6">
             <Disc className="w-6 h-6 text-purple-500" />
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Featured Albums</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          </motion.div>
+          <AnimatedGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredAlbums.map((album, index) => (
-              <div
+              <motion.div
                 key={index}
+                variants={scaleIn}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ scale: 1.05, y: -5 }}
                 className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 cursor-pointer group"
               >
                 <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -357,20 +474,26 @@ export default function Music() {
                   <Headphones className="w-4 h-4" />
                   <span>{album.tracks} tracks</span>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </section>
+          </AnimatedGrid>
+        </AnimatedSection>
 
         {/* Audio Previews Section */}
-        <section className="mb-12 bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-2 mb-6">
+        <AnimatedSection className="mb-12 bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+          <motion.div variants={fadeInUp} className="flex items-center gap-2 mb-6">
             <Headphones className="w-6 h-6 text-green-500" />
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Listen to Previews</h2>
-          </div>
+          </motion.div>
           <div className="space-y-4">
-            {demoAudioTracks.map((track) => (
-              <div key={track.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            {demoAudioTracks.map((track, index) => (
+              <motion.div 
+                key={track.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-300"
+              >
                 <div className="flex-1">
                   <div className="font-semibold text-gray-900 dark:text-white">{track.title}</div>
                   <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
@@ -381,20 +504,21 @@ export default function Music() {
                 <div className="w-64">
                   <AudioPlayer audioUrl={track.audioUrl} />
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </AnimatedSection>
 
         {/* Search and Controls */}
-        <section className="mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 mb-6">
+        <AnimatedSection className="mb-8">
+          <motion.div variants={fadeInUp} className="flex flex-col lg:flex-row gap-4 mb-6">
             {/* Search Bar */}
             <div className="flex-1 relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
               </div>
-              <input
+              <motion.input
+                whileFocus={{ scale: 1.02 }}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -404,7 +528,9 @@ export default function Music() {
             </div>
 
             {/* Sort By */}
-            <select
+            <motion.select
+              whileHover={{ scale: 1.02 }}
+              whileFocus={{ scale: 1.02 }}
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -414,68 +540,92 @@ export default function Music() {
                   {option.name}
                 </option>
               ))}
-            </select>
+            </motion.select>
 
             {/* Filter Toggle */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <SlidersHorizontal className="w-4 h-4" />
               Music Genres
               {showFilters && <X className="w-4 h-4" />}
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
 
           {/* Music Genre Filters */}
-          {showFilters && (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-600" />
-                Filter by Music Genre
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {musicGenres.map((genre) => (
-                  <button
-                    key={genre.id}
-                    onClick={() => setSelectedGenre(genre.id)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                      selectedGenre === genre.id
-                        ? 'bg-purple-600 text-white shadow-lg'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {genre.name} ({genre.count})
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                  Filter by Music Genre
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {musicGenres.map((genre) => (
+                    <motion.button
+                      key={genre.id}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setSelectedGenre(genre.id)}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                        selectedGenre === genre.id
+                          ? 'bg-purple-600 text-white shadow-lg'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {genre.name} ({genre.count})
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </AnimatedSection>
 
         {/* Results Count */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {filteredNfts.length} music tracks
-          </div>
-        </div>
+        <AnimatedSection>
+          <motion.div variants={fadeInUp} className="flex justify-between items-center mb-6">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {filteredNfts.length} music tracks
+            </div>
+          </motion.div>
+        </AnimatedSection>
 
         {/* Music NFTs Grid */}
-        <section>
+        <AnimatedSection>
           {loading ? (
             <Loader message="Loading music tracks..." />
           ) : filteredNfts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredNfts.map((nft) => (
-                <NFTCard 
-                  key={nft.tokenId} 
-                  nft={nft} 
-                  showOwner={true}
-                />
+            <AnimatedGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredNfts.map((nft, index) => (
+                <motion.div
+                  key={nft.tokenId}
+                  variants={fadeInUp}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02, y: -5 }}
+                >
+                  <NFTCard 
+                    nft={nft} 
+                    showOwner={true}
+                  />
+                </motion.div>
               ))}
-            </div>
+            </AnimatedGrid>
           ) : (
-            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700"
+            >
               <MusicIcon className="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500 mb-4" />
               <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
                 No music tracks found
@@ -486,41 +636,46 @@ export default function Music() {
                   : "Be the first to create music NFTs!"
                 }
               </p>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={clearFilters}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-500 hover:to-pink-500 transition-all duration-300"
               >
                 {searchQuery || selectedGenre !== 'all' ? 'Clear Filters' : 'Create Music NFT'}
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           )}
-        </section>
+        </AnimatedSection>
 
         {/* Royalty Information */}
-        <section className="mt-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 text-white">
-          <div className="flex items-center gap-3 mb-4">
+        <AnimatedSection className="mt-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 text-white">
+          <motion.div variants={fadeInUp} className="flex items-center gap-3 mb-4">
             <TrendingUp className="w-6 h-6" />
             <h2 className="text-2xl font-bold">Artist Royalties</h2>
-          </div>
-          <p className="mb-4 opacity-90">
+          </motion.div>
+          <motion.p variants={fadeInUp} className="mb-4 opacity-90">
             Each music NFT includes built-in royalty systems that automatically pay artists on secondary sales. 
             Support your favorite musicians directly and own a piece of their creative journey.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="bg-white bg-opacity-10 p-3 rounded-lg">
-              <div className="font-semibold">Primary Sales</div>
-              <div>Artists receive 100% of initial sale</div>
-            </div>
-            <div className="bg-white bg-opacity-10 p-3 rounded-lg">
-              <div className="font-semibold">Secondary Sales</div>
-              <div>10% royalty on all resales</div>
-            </div>
-            <div className="bg-white bg-opacity-10 p-3 rounded-lg">
-              <div className="font-semibold">Lifetime Earnings</div>
-              <div>Continuous revenue for artists</div>
-            </div>
-          </div>
-        </section>
+          </motion.p>
+          <AnimatedGrid className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            {[
+              { title: 'Primary Sales', desc: 'Artists receive 100% of initial sale' },
+              { title: 'Secondary Sales', desc: '10% royalty on all resales' },
+              { title: 'Lifetime Earnings', desc: 'Continuous revenue for artists' }
+            ].map((item, index) => (
+              <motion.div
+                key={index}
+                variants={scaleIn}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white bg-opacity-10 p-3 rounded-lg"
+              >
+                <div className="font-semibold">{item.title}</div>
+                <div>{item.desc}</div>
+              </motion.div>
+            ))}
+          </AnimatedGrid>
+        </AnimatedSection>
       </div>
     </div>
   );

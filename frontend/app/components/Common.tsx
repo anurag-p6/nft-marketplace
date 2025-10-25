@@ -22,7 +22,7 @@ export default function Common({ isCollapsed }: CommonProps) {
             }`}
           >
             {/* Logo Icon */}
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
               <svg
                 className="w-4 h-4 text-white"
                 fill="currentColor"
@@ -35,10 +35,10 @@ export default function Common({ isCollapsed }: CommonProps) {
             {/* Logo Text - Only show when not collapsed */}
             {!isCollapsed && (
               <div>
-                <span className="text-lg font-bold text-gray-900 block">
+                <span className="text-lg font-bold text-gray-900 dark:text-white block">
                   NFT Market
                 </span>
-                <span className="text-xs text-gray-500 block">
+                <span className="text-xs text-gray-500 dark:text-gray-400 block">
                   Digital Marketplace
                 </span>
               </div>

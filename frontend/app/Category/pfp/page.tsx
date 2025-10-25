@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import NFTCard from '@/components/NFTCard';
+import { useState, useEffect, ReactNode } from 'react';
+import NFTCard from '@/app/components/NFTCard';
 import { getAllNFTs, NFTData } from '@/utils/fetchNFTs';
-import Loader from '@/components/Loader';
+import Loader from '@/app/components/Loader';
 import { 
   Search, 
   Filter, 
@@ -15,10 +15,95 @@ import {
   SlidersHorizontal,
   X
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+
+// Animation variants
+const fadeInUp = {
+  initial: { opacity: 0, y: 40 },
+  animate: { opacity: 1, y: 0 },
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const scaleIn = {
+  initial: { opacity: 0, scale: 0.9 },
+  animate: { opacity: 1, scale: 1 },
+};
+
+// Define proper types for the animated components
+interface AnimatedSectionProps {
+  children: ReactNode;
+  className?: string;
+}
+
+interface AnimatedGridProps {
+  children: ReactNode;
+  className?: string;
+}
+
+// Extended NFTMetadata type for PFP - include all required properties from base NFTMetadata
+interface PFPNFTMetadata {
+  name?: string;
+  description?: string;
+  image?: string; // Add the missing image property
+  attributes?: Array<{ value?: string }>;
+}
+
+// Instead of extending, use intersection type to ensure compatibility
+type PFPNFTData = NFTData & {
+  metadata?: PFPNFTMetadata;
+};
+
+// Animated component wrappers
+function AnimatedSection({ children, className = "" }: AnimatedSectionProps) {
+  const [ref, inView] = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="initial"
+      animate={inView ? "animate" : "initial"}
+      variants={fadeInUp}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function AnimatedGrid({ children, className = "" }: AnimatedGridProps) {
+  const [ref, inView] = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="initial"
+      animate={inView ? "animate" : "initial"}
+      variants={staggerContainer}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export default function PFP() {
-  const [nfts, setNfts] = useState<NFTData[]>([]);
-  const [filteredNfts, setFilteredNfts] = useState<NFTData[]>([]);
+  const [nfts, setNfts] = useState<PFPNFTData[]>([]);
+  const [filteredNfts, setFilteredNfts] = useState<PFPNFTData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent');
@@ -95,7 +180,7 @@ export default function PFP() {
               attr.value?.toString().toLowerCase().includes(keyword)
             )
           );
-        });
+        }) as PFPNFTData[];
         
         setNfts(pfpNFTs);
         setFilteredNfts(pfpNFTs);
@@ -193,51 +278,76 @@ export default function PFP() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8">
         {/* Hero Section */}
-        <section className="text-center py-12">
-          <div className="flex justify-center items-center gap-3 mb-4">
+        <motion.section 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-center py-12"
+        >
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex justify-center items-center gap-3 mb-4"
+          >
             <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-white">
               <Users className="w-8 h-8" />
             </div>
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          </motion.div>
+          
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+          >
             Profile Pictures
-          </h1>
-          <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+          </motion.h1>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto"
+          >
             Discover unique avatar collections and digital identity NFTs. 
             Find your next profile picture from the world's top PFP collections.
-          </p>
+          </motion.p>
           
           {/* PFP Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto mb-8">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{pfpStats.totalPFPs}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total PFPs</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">${pfpStats.totalVolume.toFixed(0)}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Volume</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">${pfpStats.averagePrice.toFixed(2)}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Avg Price</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{pfpStats.collections}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Collections</div>
-            </div>
-          </div>
-        </section>
+          <AnimatedGrid className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto mb-8">
+            {[
+              { value: pfpStats.totalPFPs, label: 'Total PFPs' },
+              { value: `$${pfpStats.totalVolume.toFixed(0)}`, label: 'Total Volume' },
+              { value: `$${pfpStats.averagePrice.toFixed(2)}`, label: 'Avg Price' },
+              { value: pfpStats.collections, label: 'Collections' }
+            ].map((stat, index) => (
+              <motion.div
+                key={index}
+                variants={scaleIn}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 text-center border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 hover:scale-105"
+              >
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</div>
+              </motion.div>
+            ))}
+          </AnimatedGrid>
+        </motion.section>
 
         {/* Trending Collections */}
-        <section className="mb-12">
-          <div className="flex items-center gap-2 mb-6">
+        <AnimatedSection className="mb-12">
+          <motion.div variants={fadeInUp} className="flex items-center gap-2 mb-6">
             <TrendingUp className="w-6 h-6 text-orange-500" />
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Trending Collections</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          </motion.div>
+          <AnimatedGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {trendingCollections.map((collection, index) => (
-              <div
+              <motion.div
                 key={index}
+                variants={scaleIn}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ scale: 1.05, y: -5 }}
                 className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 cursor-pointer group"
               >
                 <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -256,20 +366,21 @@ export default function PFP() {
                     <span className="font-medium text-green-600">{collection.volume}</span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </section>
+          </AnimatedGrid>
+        </AnimatedSection>
 
         {/* Search and Controls */}
-        <section className="mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 mb-6">
+        <AnimatedSection className="mb-8">
+          <motion.div variants={fadeInUp} className="flex flex-col lg:flex-row gap-4 mb-6">
             {/* Search Bar */}
             <div className="flex-1 relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
               </div>
-              <input
+              <motion.input
+                whileFocus={{ scale: 1.02 }}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -279,7 +390,9 @@ export default function PFP() {
             </div>
 
             {/* Sort By */}
-            <select
+            <motion.select
+              whileHover={{ scale: 1.02 }}
+              whileFocus={{ scale: 1.02 }}
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -289,100 +402,126 @@ export default function PFP() {
                   {option.name}
                 </option>
               ))}
-            </select>
+            </motion.select>
 
             {/* Filter Toggle */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <SlidersHorizontal className="w-4 h-4" />
               Filters
               {showFilters && <X className="w-4 h-4" />}
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
 
           {/* Advanced Filters */}
-          {showFilters && (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-blue-600" />
-                Filter PFPs
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Rarity Filter */}
-                <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                    <Crown className="w-4 h-4" />
-                    Rarity
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {rarityOptions.map((rarity) => (
-                      <button
-                        key={rarity.id}
-                        onClick={() => setSelectedRarity(rarity.id)}
-                        className={`px-3 py-2 rounded-lg font-medium transition-all duration-300 ${
-                          selectedRarity === rarity.id
-                            ? 'bg-blue-600 text-white shadow-lg'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        {rarity.name} ({rarity.count})
-                      </button>
-                    ))}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-blue-600" />
+                  Filter PFPs
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Rarity Filter */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                      <Crown className="w-4 h-4" />
+                      Rarity
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {rarityOptions.map((rarity) => (
+                        <motion.button
+                          key={rarity.id}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setSelectedRarity(rarity.id)}
+                          className={`px-3 py-2 rounded-lg font-medium transition-all duration-300 ${
+                            selectedRarity === rarity.id
+                              ? 'bg-blue-600 text-white shadow-lg'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          {rarity.name} ({rarity.count})
+                        </motion.button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Collection Filter */}
-                <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                    <Star className="w-4 h-4" />
-                    Collection
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {collectionOptions.map((collection) => (
-                      <button
-                        key={collection.id}
-                        onClick={() => setSelectedCollection(collection.id)}
-                        className={`px-3 py-2 rounded-lg font-medium transition-all duration-300 ${
-                          selectedCollection === collection.id
-                            ? 'bg-blue-600 text-white shadow-lg'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        {collection.name} ({collection.count})
-                      </button>
-                    ))}
+                  {/* Collection Filter */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                      <Star className="w-4 h-4" />
+                      Collection
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {collectionOptions.map((collection) => (
+                        <motion.button
+                          key={collection.id}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setSelectedCollection(collection.id)}
+                          className={`px-3 py-2 rounded-lg font-medium transition-all duration-300 ${
+                            selectedCollection === collection.id
+                              ? 'bg-blue-600 text-white shadow-lg'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          {collection.name} ({collection.count})
+                        </motion.button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
-        </section>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </AnimatedSection>
 
         {/* Results Count */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {filteredNfts.length} profile pictures
-          </div>
-        </div>
+        <AnimatedSection>
+          <motion.div variants={fadeInUp} className="flex justify-between items-center mb-6">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {filteredNfts.length} profile pictures
+            </div>
+          </motion.div>
+        </AnimatedSection>
 
         {/* PFP Grid */}
-        <section>
+        <AnimatedSection>
           {loading ? (
             <Loader message="Loading profile pictures..." />
           ) : filteredNfts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredNfts.map((nft) => (
-                <NFTCard 
-                  key={nft.tokenId} 
-                  nft={nft} 
-                  showOwner={true}
-                />
+            <AnimatedGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredNfts.map((nft, index) => (
+                <motion.div
+                  key={nft.tokenId}
+                  variants={fadeInUp}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02, y: -5 }}
+                >
+                  <NFTCard 
+                    nft={nft} 
+                    showOwner={true}
+                  />
+                </motion.div>
               ))}
-            </div>
+            </AnimatedGrid>
           ) : (
-            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700"
+            >
               <Users className="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500 mb-4" />
               <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
                 No profile pictures found
@@ -393,23 +532,29 @@ export default function PFP() {
                   : "Be the first to create PFP NFTs!"
                 }
               </p>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={clearFilters}
                 className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-500 hover:to-purple-500 transition-all duration-300"
               >
                 {searchQuery || selectedRarity !== 'all' || selectedCollection !== 'all' ? 'Clear Filters' : 'Create PFP NFT'}
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           )}
-        </section>
+        </AnimatedSection>
 
         {/* Load More */}
         {filteredNfts.length > 0 && (
-          <div className="text-center mt-12">
-            <button className="px-8 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300">
+          <AnimatedSection className="text-center mt-12">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-8 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300"
+            >
               Load More PFPs
-            </button>
-          </div>
+            </motion.button>
+          </AnimatedSection>
         )}
       </div>
     </div>
