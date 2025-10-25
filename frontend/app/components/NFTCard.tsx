@@ -1,37 +1,62 @@
 import { NFTData } from '@/utils/fetchNFTs';
 import Link from 'next/link';
+import { useState } from 'react';
 
 interface NFTCardProps {
   nft: NFTData;
   showOwner?: boolean;
 }
 
+interface NFTAttribute {
+  trait_type: string;
+  value: string | number;
+}
+
+interface NFTMetadata {
+  name?: string;
+  description?: string;
+  image?: string;
+  attributes?: NFTAttribute[];
+}
+
+interface NFTListing {
+  active?: boolean;
+  priceUSD?: number;
+}
+
 export default function NFTCard({ nft, showOwner = false }: NFTCardProps) {
   const { tokenId, owner, metadata, listing } = nft;
+  const [imageError, setImageError] = useState(false);
 
-  // Get image URL from metadata
-  const imageUrl = metadata?.image || '/placeholder-nft.png';
-  const name = metadata?.name || `NFT #${tokenId}`;
-  const description = metadata?.description || 'No description available';
+  // Safely get values with fallbacks
+  const safeMetadata: NFTMetadata = metadata || {};
+  const safeListing: NFTListing = listing || {};
+
+  const imageUrl = !imageError && safeMetadata.image ? safeMetadata.image : '/placeholder-nft.png';
+  const name = safeMetadata.name || `NFT #${tokenId}`;
+  const description = safeMetadata.description || 'No description available';
 
   // Truncate address for display
   const truncateAddress = (address: string) => {
+    if (!address) return 'Unknown';
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
+  // Handle image loading errors
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   return (
-    <Link href={`/nft/${tokenId}`}>
-      <div className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-2xl hover:shadow-purple-200 transition-all duration-300 cursor-pointer border border-gray-200 hover:border-purple-300 animate-fade-in">
+    <Link href={`/nft/${tokenId}`} className="block">
+      <div className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-2xl hover:shadow-purple-200 transition-all duration-300 cursor-pointer border border-gray-200 hover:border-purple-300">
         {/* NFT Image */}
         <div className="relative aspect-square overflow-hidden bg-gray-100">
           <img
             src={imageUrl}
             alt={name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            onError={(e) => {
-              // Fallback if image fails to load
-              e.currentTarget.src = '/placeholder-nft.png';
-            }}
+            onError={handleImageError}
           />
 
           {/* Token ID Badge */}
@@ -49,14 +74,14 @@ export default function NFTCard({ nft, showOwner = false }: NFTCardProps) {
             {name}
           </h3>
 
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+          <p className="text-sm text-gray-600 mb-3 line-clamp-2 min-h-[2.5rem]">
             {description}
           </p>
 
           {/* Attributes */}
-          {metadata?.attributes && metadata.attributes.length > 0 && (
+          {safeMetadata.attributes && safeMetadata.attributes.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-3">
-              {metadata.attributes.slice(0, 3).map((attr, index) => (
+              {safeMetadata.attributes.slice(0, 3).map((attr, index) => (
                 <span
                   key={index}
                   className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-200"
@@ -64,28 +89,28 @@ export default function NFTCard({ nft, showOwner = false }: NFTCardProps) {
                   {attr.trait_type}: {attr.value}
                 </span>
               ))}
-              {metadata.attributes.length > 3 && (
+              {safeMetadata.attributes.length > 3 && (
                 <span className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded border border-gray-200">
-                  +{metadata.attributes.length - 3} more
+                  +{safeMetadata.attributes.length - 3} more
                 </span>
               )}
             </div>
           )}
 
           {/* Price */}
-          {listing && listing.active && (
+          {safeListing.active && safeListing.priceUSD && (
             <div className="border-t border-gray-200 pt-3 mt-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Price</span>
                 <span className="text-lg font-bold text-purple-600 group-hover:text-purple-700 transition-colors duration-300">
-                  ${listing.priceUSD.toFixed(2)}
+                  ${safeListing.priceUSD.toFixed(2)}
                 </span>
               </div>
             </div>
           )}
 
           {/* Owner Info */}
-          {showOwner && (
+          {showOwner && owner && (
             <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
               <span className="font-medium">Owner:</span>
               <span className="font-mono text-gray-700">{truncateAddress(owner)}</span>

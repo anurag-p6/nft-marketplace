@@ -66,6 +66,11 @@ export async function listNFT(params: {
   console.log('[Marketplace] ETH Price (USD):', ethPriceUSD);
   console.log('[Marketplace] Price in Wei:', priceInWei.toString());
 
+  // Validate contract address
+  if (!contracts.nftMarketplace?.address) {
+    throw new Error('Marketplace contract address not configured');
+  }
+
   // List the NFT on the marketplace
   const hash = await writeContract(config, {
     address: contracts.nftMarketplace.address,
@@ -84,11 +89,8 @@ export async function listNFT(params: {
   // Parse the Listed event to get listing ID
   let listingId: bigint | undefined;
   if (receipt.logs && receipt.logs.length > 0) {
-    // The Listed event is emitted with the listingId as the first indexed parameter
-    // We need to find the log that matches the Listed event
     for (const log of receipt.logs) {
       if (log.topics[0]) {
-        // Try to extract listingId from topics (first indexed parameter after event signature)
         if (log.topics.length > 1) {
           listingId = BigInt(log.topics[1]);
           break;
@@ -105,6 +107,10 @@ export async function listNFT(params: {
  */
 export async function getListingById(listingId: bigint): Promise<ListingData | null> {
   try {
+    if (!contracts.nftMarketplace?.address) {
+      throw new Error('Marketplace contract address not configured');
+    }
+
     const listing = await readContract(config, {
       address: contracts.nftMarketplace.address,
       abi: contracts.nftMarketplace.abi,
@@ -147,6 +153,10 @@ export async function getListingById(listingId: bigint): Promise<ListingData | n
  */
 export async function getTokenListing(nftContract: Address, tokenId: bigint): Promise<ListingData | null> {
   try {
+    if (!contracts.nftMarketplace?.address) {
+      throw new Error('Marketplace contract address not configured');
+    }
+
     // Get the listing ID for this token
     const listingId = await readContract(config, {
       address: contracts.nftMarketplace.address,
@@ -174,6 +184,10 @@ export async function buyNFT(listingId: bigint, price: bigint): Promise<{ hash: 
   console.log('[Marketplace] Buying NFT, listing ID:', listingId.toString());
   console.log('[Marketplace] Price:', price.toString());
 
+  if (!contracts.nftMarketplace?.address) {
+    throw new Error('Marketplace contract address not configured');
+  }
+
   const hash = await writeContract(config, {
     address: contracts.nftMarketplace.address,
     abi: contracts.nftMarketplace.abi,
@@ -198,6 +212,10 @@ export async function buyNFT(listingId: bigint, price: bigint): Promise<{ hash: 
 export async function cancelListing(listingId: bigint): Promise<{ hash: Address }> {
   console.log('[Marketplace] Cancelling listing:', listingId.toString());
 
+  if (!contracts.nftMarketplace?.address) {
+    throw new Error('Marketplace contract address not configured');
+  }
+
   const hash = await writeContract(config, {
     address: contracts.nftMarketplace.address,
     abi: contracts.nftMarketplace.abi,
@@ -219,6 +237,10 @@ export async function cancelListing(listingId: bigint): Promise<{ hash: Address 
  */
 export async function updateListingPrice(listingId: bigint, newPriceUSD: number): Promise<{ hash: Address }> {
   console.log('[Marketplace] Updating listing price:', { listingId: listingId.toString(), newPriceUSD });
+
+  if (!contracts.nftMarketplace?.address) {
+    throw new Error('Marketplace contract address not configured');
+  }
 
   // Convert USD to ETH
   const ethPriceUSD = await getETHPriceInUSD();

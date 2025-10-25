@@ -9,6 +9,27 @@ import { TrendingUp, Users, Zap, Shield, Star, Award, Clock, Sparkles, ArrowRigh
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 
+// Temporary mock IPFS functions - put this in your page.tsx
+interface NFTMetadata {
+  name: string;
+  description: string;
+  image: string;
+  attributes: Array<{ trait_type: string; value: string }>;
+}
+
+const uploadToIPFS = async (file: File): Promise<string> => {
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  return `ipfs://mock_image_${Date.now()}`;
+};
+
+const uploadMetadataToIPFS = async (metadata: NFTMetadata): Promise<string> => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return `ipfs://mock_metadata_${Date.now()}`;
+};
+
+const getIPFSUrl = (cid: string): string => {
+  return `https://ipfs.io/ipfs/${cid}`;
+};
 // Animation variants
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },

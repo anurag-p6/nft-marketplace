@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
-import { NFTMetadata, getIPFSUrl } from '@/utils/ipfs';
+import { NFTMetadata, getIPFSUrl, uploadToIPFS, uploadMetadataToIPFS } from '@/utils/ipfs';
 import { mintNFT, approveNFT } from '@/utils/nft';
 import { listNFT } from '@/utils/marketplace';
 import { contracts } from '@/config/contracts';
@@ -46,14 +46,21 @@ const scaleIn = {
   animate: { opacity: 1, scale: 1 },
 };
 
-const slideInLeft = {
-  initial: { opacity: 0, x: -20 },
-  animate: { opacity: 1, x: 0 }
-};
+interface FormData {
+  name: string;
+  description: string;
+  price: string;
+  category: string;
+}
+
+interface Attribute {
+  trait_type: string;
+  value: string;
+}
 
 export default function CreateNFTPage() {
   const { address, isConnected } = useAccount();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     description: '',
     price: '',
@@ -61,7 +68,7 @@ export default function CreateNFTPage() {
   });
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
-  const [attributes, setAttributes] = useState<Array<{ trait_type: string; value: string }>>([]);
+  const [attributes, setAttributes] = useState<Attribute[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [imageCID, setImageCID] = useState<string>('');
@@ -70,6 +77,7 @@ export default function CreateNFTPage() {
   const [txHash, setTxHash] = useState<string>('');
   const [listingId, setListingId] = useState<string>('');
   const [currentStep, setCurrentStep] = useState(1);
+  const [error, setError] = useState<string>('');
 
   const categories = [
     { id: 'Art', name: 'Art', icon: <Palette className="w-5 h-5" />, color: 'from-purple-500 to-pink-500' },
@@ -90,7 +98,21 @@ export default function CreateNFTPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
+      // Validate file size (max 50MB)
+      if (selectedFile.size > 50 * 1024 * 1024) {
+        setError('File size too large. Maximum size is 50MB.');
+        return;
+      }
+
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'audio/mpeg'];
+      if (!validTypes.includes(selectedFile.type)) {
+        setError('Invalid file type. Please upload images, videos, or audio files.');
+        return;
+      }
+
       setFile(selectedFile);
+      setError('');
       const reader = new FileReader();
       reader.onloadend = () => setPreviewUrl(reader.result as string);
       reader.readAsDataURL(selectedFile);
@@ -102,6 +124,7 @@ export default function CreateNFTPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError('');
   };
 
   const addAttribute = () => {
@@ -118,67 +141,88 @@ export default function CreateNFTPage() {
     setAttributes(attributes.filter((_, i) => i !== index));
   };
 
-  const uploadImage = async () => {
-    if (!file) throw new Error('No file selected');
-
-    const formDataToSend = new FormData();
-    formDataToSend.append('file', file);
-
-    const response = await fetch('/api/upload', { method: 'POST', body: formDataToSend });
-    const data = await response.json();
-    if (!data.success) throw new Error(data.error || 'Failed to upload image');
-
-    return data.cid;
-  };
-
-  const uploadMetadata = async (imageCID: string) => {
-    const metadata: NFTMetadata = {
-      name: formData.name,
-      description: formData.description,
-      image: getIPFSUrl(imageCID),
-      attributes: [
-        ...attributes.filter((attr) => attr.trait_type && attr.value),
-        { trait_type: 'Category', value: formData.category },
-      ],
-    };
-
-    const formDataToSend = new FormData();
-    formDataToSend.append('metadata', JSON.stringify(metadata));
-
-    const response = await fetch('/api/upload', { method: 'POST', body: formDataToSend });
-    const data = await response.json();
-    if (!data.success) throw new Error(data.error);
-
-    return data.cid;
+  const validateForm = (): boolean => {
+    if (!file) {
+      setError('Please upload a file');
+      return false;
+    }
+    if (!formData.name.trim()) {
+      setError('Please enter a name for your NFT');
+      return false;
+    }
+    if (!formData.description.trim()) {
+      setError('Please enter a description for your NFT');
+      return false;
+    }
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      setError('Please enter a valid price greater than 0');
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isConnected || !address) return alert('Please connect your wallet first');
-    if (!file || !formData.name || !formData.description) return alert('Fill all required fields');
-    if (!formData.price || parseFloat(formData.price) <= 0) return alert('Invalid price');
+    
+    if (!isConnected || !address) {
+      setError('Please connect your wallet first');
+      return;
+    }
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       setLoading(true);
+      setError('');
+
+      // Step 1: Upload image to IPFS
       setLoadingMessage('Uploading image to IPFS...');
-      const uploadedImageCID = await uploadImage();
+      const imageIpfsUri = await uploadToIPFS(file!);
+      const uploadedImageCID = imageIpfsUri.replace('ipfs://', '');
       setImageCID(uploadedImageCID);
 
+      // Step 2: Upload metadata to IPFS
       setLoadingMessage('Uploading metadata to IPFS...');
-      const uploadedMetadataCID = await uploadMetadata(uploadedImageCID);
+      
+      const filteredAttributes = attributes.filter(attr => 
+        attr.trait_type.trim() && attr.value.trim()
+      );
+
+      const metadata: NFTMetadata = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        image: imageIpfsUri,
+        attributes: [
+          ...filteredAttributes,
+          { trait_type: 'Category', value: formData.category },
+        ],
+      };
+
+      const metadataIpfsUri = await uploadMetadataToIPFS(metadata);
+      const uploadedMetadataCID = metadataIpfsUri.replace('ipfs://', '');
       setMetadataCID(uploadedMetadataCID);
 
+      // Step 3: Mint NFT
       setLoadingMessage('Minting NFT on blockchain...');
       const tokenURI = getIPFSUrl(uploadedMetadataCID);
       const mintResult = await mintNFT({ to: address, tokenURI });
 
+      if (!mintResult.hash) {
+        throw new Error('Minting transaction failed');
+      }
+
       setTxHash(mintResult.hash);
+      
       if (mintResult.tokenId) {
         setTokenId(mintResult.tokenId.toString());
 
+        // Step 4: Approve marketplace
         setLoadingMessage('Approving marketplace contract...');
         await approveNFT(mintResult.tokenId);
 
+        // Step 5: List NFT
         setLoadingMessage('Listing NFT on marketplace...');
         const listResult = await listNFT({
           nftContract: contracts.nftStorage.address,
@@ -186,17 +230,34 @@ export default function CreateNFTPage() {
           priceUSD: parseFloat(formData.price),
         });
 
-        if (listResult.listingId) setListingId(listResult.listingId.toString());
+        if (listResult.listingId) {
+          setListingId(listResult.listingId.toString());
+        }
 
         setCurrentStep(5); // Success step
       }
     } catch (err) {
       console.error('Error creating NFT:', err);
-      alert(`Error: ${(err as Error).message}`);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
       setLoadingMessage('');
     }
+  };
+
+  const resetForm = () => {
+    setFormData({ name: '', description: '', price: '', category: 'Art' });
+    setFile(null);
+    setPreviewUrl('');
+    setAttributes([]);
+    setImageCID('');
+    setMetadataCID('');
+    setTokenId('');
+    setTxHash('');
+    setListingId('');
+    setError('');
+    setCurrentStep(1);
   };
 
   if (!isConnected) {
@@ -284,6 +345,17 @@ export default function CreateNFTPage() {
           </div>
         </motion.div>
 
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300"
+          >
+            {error}
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -332,6 +404,14 @@ export default function CreateNFTPage() {
                         <span className="text-green-900 dark:text-green-100">{listingId}</span>
                       </div>
                     )}
+                    {txHash && (
+                      <div className="flex justify-between">
+                        <span className="text-green-800 dark:text-green-300 font-medium">Transaction:</span>
+                        <span className="text-green-900 dark:text-green-100 text-xs truncate max-w-[120px]">
+                          {txHash.slice(0, 10)}...{txHash.slice(-8)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -350,20 +430,11 @@ export default function CreateNFTPage() {
                   </motion.div>
                 )}
 
-                <div className="flex gap-4 justify-center">
+                <div className="flex gap-4 justify-center flex-wrap">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      setCurrentStep(1);
-                      setFormData({ name: '', description: '', price: '', category: 'Art' });
-                      setFile(null);
-                      setPreviewUrl('');
-                      setAttributes([]);
-                      setTokenId('');
-                      setTxHash('');
-                      setListingId('');
-                    }}
+                    onClick={resetForm}
                     className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-500 hover:to-pink-500 transition-all duration-300 flex items-center gap-2"
                   >
                     <Plus className="w-4 h-4" />
@@ -378,6 +449,16 @@ export default function CreateNFTPage() {
                     Explore Marketplace
                     <ArrowRight className="w-4 h-4" />
                   </motion.button>
+                  {txHash && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => window.open(`https://etherscan.io/tx/${txHash}`, '_blank')}
+                      className="px-6 py-3 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300 rounded-lg font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-300"
+                    >
+                      View Transaction
+                    </motion.button>
+                  )}
                 </div>
               </motion.div>
             ) : (
@@ -416,7 +497,7 @@ export default function CreateNFTPage() {
                           Drop your file here or click to browse
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Supports images, videos, and audio files
+                          Supports images, videos, and audio files (Max 50MB)
                         </p>
                         <div className="flex justify-center gap-4 mt-4">
                           <div className="flex items-center gap-2 text-sm text-gray-500">

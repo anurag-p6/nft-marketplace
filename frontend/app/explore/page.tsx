@@ -39,11 +39,6 @@ const scaleIn = {
   animate: { opacity: 1, scale: 1 },
 };
 
-const slideInLeft = {
-  initial: { opacity: 0, x: -20 },
-  animate: { opacity: 1, x: 0 },
-};
-
 // Define proper types for animated components
 interface AnimatedSectionProps {
   children: ReactNode;
@@ -110,15 +105,21 @@ export default function Explore() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
 
+  // Safe category counting function
+  const getCategoryCount = (categoryId: string) => {
+    if (categoryId === 'all') return nfts.length;
+    return nfts.filter(nft => nft.category === categoryId).length;
+  };
+
   const categories = [
-    { id: 'all', name: 'All Items', count: nfts.length, icon: '✨' },
-    { id: 'art', name: 'Art', count: nfts.filter(nft => nft.category === 'art').length, icon: '🎨' },
-    { id: 'gaming', name: 'Gaming', count: nfts.filter(nft => nft.category === 'gaming').length, icon: '🎮' },
-    { id: 'music', name: 'Music', count: nfts.filter(nft => nft.category === 'music').length, icon: '🎵' },
-    { id: 'photography', name: 'Photography', count: nfts.filter(nft => nft.category === 'photography').length, icon: '📸' },
-    { id: 'pfp', name: 'PFP', count: nfts.filter(nft => nft.category === 'pfp').length, icon: '👤' },
-    { id: 'sports', name: 'Sports', count: nfts.filter(nft => nft.category === 'sports').length, icon: '⚽' },
-    { id: 'virtual-worlds', name: 'Virtual Worlds', count: nfts.filter(nft => nft.category === 'virtual-worlds').length, icon: '🌐' },
+    { id: 'all', name: 'All Items', count: getCategoryCount('all'), icon: '✨' },
+    { id: 'art', name: 'Art', count: getCategoryCount('art'), icon: '🎨' },
+    { id: 'gaming', name: 'Gaming', count: getCategoryCount('gaming'), icon: '🎮' },
+    { id: 'music', name: 'Music', count: getCategoryCount('music'), icon: '🎵' },
+    { id: 'photography', name: 'Photography', count: getCategoryCount('photography'), icon: '📸' },
+    { id: 'pfp', name: 'PFP', count: getCategoryCount('pfp'), icon: '👤' },
+    { id: 'sports', name: 'Sports', count: getCategoryCount('sports'), icon: '⚽' },
+    { id: 'virtual-worlds', name: 'Virtual Worlds', count: getCategoryCount('virtual-worlds'), icon: '🌐' },
   ];
 
   const sortOptions = [
@@ -127,13 +128,24 @@ export default function Explore() {
     { id: 'price-high', name: 'Price: High to Low', icon: <Flame className="w-4 h-4" /> },
   ];
 
+  // Safe attribute value checker
+  const hasAttributeValue = (attributes: any[] | undefined, searchTerm: string): boolean => {
+    if (!attributes || !Array.isArray(attributes)) return false;
+    
+    return attributes.some(attr => {
+      if (!attr || typeof attr !== 'object') return false;
+      const value = String(attr.value || '').toLowerCase();
+      return value.includes(searchTerm.toLowerCase());
+    });
+  };
+
   useEffect(() => {
     const fetchNFTs = async () => {
       setLoading(true);
       try {
         const allNFTs = await getAllNFTs();
         
-        // Add category based on metadata analysis
+        // Add category based on metadata analysis with safe access
         const nftsWithCategory: ExtendedNFTData[] = allNFTs.map(nft => {
           const name = nft.metadata?.name?.toLowerCase() || '';
           const description = nft.metadata?.description?.toLowerCase() || '';
@@ -141,29 +153,29 @@ export default function Explore() {
 
           let category = 'art'; // Default category
 
-          // Determine category based on content
+          // Determine category based on content with safe attribute checking
           if (name.includes('game') || description.includes('game') || 
               name.includes('character') || description.includes('character') ||
-              attributes.some(attr => String(attr?.value).toLowerCase().includes('game'))) {
+              hasAttributeValue(attributes, 'game')) {
             category = 'gaming';
           } else if (name.includes('music') || description.includes('music') ||
                      name.includes('song') || description.includes('song') ||
-                     attributes.some(attr => String(attr?.value).toLowerCase().includes('music'))) {
+                     hasAttributeValue(attributes, 'music')) {
             category = 'music';
           } else if (name.includes('photo') || description.includes('photo') ||
                      name.includes('camera') || description.includes('camera') ||
-                     attributes.some(attr => String(attr?.value).toLowerCase().includes('photo'))) {
+                     hasAttributeValue(attributes, 'photo')) {
             category = 'photography';
           } else if (name.includes('sport') || description.includes('sport') ||
-                     attributes.some(attr => String(attr?.value).toLowerCase().includes('sport'))) {
+                     hasAttributeValue(attributes, 'sport')) {
             category = 'sports';
           } else if (name.includes('virtual') || description.includes('virtual') ||
                      name.includes('world') || description.includes('world') ||
-                     attributes.some(attr => String(attr?.value).toLowerCase().includes('virtual'))) {
+                     hasAttributeValue(attributes, 'virtual')) {
             category = 'virtual-worlds';
           } else if (name.includes('pfp') || description.includes('pfp') ||
                      name.includes('profile') || description.includes('profile') ||
-                     attributes.some(attr => String(attr?.value).toLowerCase().includes('pfp'))) {
+                     hasAttributeValue(attributes, 'pfp')) {
             category = 'pfp';
           }
 
@@ -188,13 +200,17 @@ export default function Explore() {
   useEffect(() => {
     let results = nfts;
 
-    // Apply search filter
+    // Apply search filter with safe access
     if (searchQuery) {
-      results = results.filter(nft =>
-        nft.metadata?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        nft.metadata?.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        nft.owner?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      results = results.filter(nft => {
+        const name = nft.metadata?.name?.toLowerCase() || '';
+        const description = nft.metadata?.description?.toLowerCase() || '';
+        const owner = nft.owner?.toLowerCase() || '';
+        
+        return name.includes(searchQuery.toLowerCase()) ||
+               description.includes(searchQuery.toLowerCase()) ||
+               owner.includes(searchQuery.toLowerCase());
+      });
     }
 
     // Apply category filter
@@ -202,16 +218,22 @@ export default function Explore() {
       results = results.filter(nft => nft.category === selectedCategory);
     }
 
-    // Apply sorting
+    // Apply sorting with safe price access
     results.sort((a, b) => {
+      const priceA = a.listing?.priceUSD || 0;
+      const priceB = b.listing?.priceUSD || 0;
+      
       switch (sortBy) {
         case 'price-low':
-          return (a.listing?.priceUSD || 0) - (b.listing?.priceUSD || 0);
+          return priceA - priceB;
         case 'price-high':
-          return (b.listing?.priceUSD || 0) - (a.listing?.priceUSD || 0);
+          return priceB - priceA;
         case 'recent':
         default:
-          return parseInt(b.tokenId) - parseInt(a.tokenId);
+          // Safe tokenId parsing
+          const idA = parseInt(a.tokenId) || 0;
+          const idB = parseInt(b.tokenId) || 0;
+          return idB - idA;
       }
     });
 

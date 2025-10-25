@@ -20,28 +20,43 @@ import {
   Eye,
   Wallet,
   BarChart3,
-  Target
+  Target,
+  Search,
+  AlertCircle,
+  PieChart,
+  Activity,
+  Shield,
+  BadgeCheck
 } from 'lucide-react';
 
 type Drop = {
   id: string;
   project: string;
   artist: string;
-  start: string; // ISO
-  end?: string; // optional ISO
+  start: string;
+  end?: string;
   mintPriceUSD: number;
   supply: number;
   minted: number;
   category: 'Art' | 'Gaming' | 'Music' | 'Sports' | 'VirtualWorld' | 'Other';
   verified?: boolean;
   blueChip?: boolean;
-  floorAfter?: number; // for past drops
+  floorAfter?: number;
   image?: string;
   trending?: boolean;
   featured?: boolean;
+  riskLevel: 'Low' | 'Medium' | 'High';
+  marketCap?: number;
+  totalVolume?: number;
 };
 
-type Stat = { label: string; value: string; icon: React.ReactNode; change?: string };
+type Stat = { 
+  label: string; 
+  value: string; 
+  icon: React.ReactNode; 
+  change?: string;
+  description?: string;
+};
 
 // Animation variants
 const fadeInUp = {
@@ -113,13 +128,27 @@ function ProgressBar({ minted, supply }: { minted: number; supply: number }) {
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 1, ease: "easeOut" }}
-          className="h-2 bg-gradient-to-r from-purple-500 to-pink-500"
+          className="h-2 bg-gradient-to-r from-blue-500 to-purple-600"
         />
       </div>
       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
         {minted} / {supply} minted ({pct}%)
       </div>
     </div>
+  );
+}
+
+function RiskIndicator({ level }: { level: 'Low' | 'Medium' | 'High' }) {
+  const colors = {
+    Low: 'bg-green-100 text-green-800 border-green-200',
+    Medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    High: 'bg-red-100 text-red-800 border-red-200'
+  };
+
+  return (
+    <span className={`px-2 py-1 text-xs font-medium rounded-full border ${colors[level]}`}>
+      {level} Risk
+    </span>
   );
 }
 
@@ -143,44 +172,45 @@ function DropCard({ drop, mode }: { drop: Drop; mode: 'upcoming' | 'live' | 'pas
   return (
     <motion.div
       variants={fadeInUp}
-      whileHover={{ scale: 1.02, y: -2 }}
-      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm hover:shadow-lg transition-all duration-300 group relative overflow-hidden"
+      whileHover={{ y: -4 }}
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
     >
       {/* Background gradient effect */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(drop.category)} opacity-5 group-hover:opacity-10 transition-opacity duration-300`} />
+      <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(drop.category)} opacity-3 group-hover:opacity-5 transition-opacity duration-300`} />
       
-      {/* Trending badge */}
-      {drop.trending && (
-        <div className="absolute top-3 right-3">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="flex items-center gap-1 bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 py-1 rounded-full text-xs font-medium"
-          >
-            <Flame className="w-3 h-3" />
-            Trending
-          </motion.div>
+      {/* Status badges */}
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex gap-2">
+          {drop.featured && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-medium"
+            >
+              <Star className="w-3 h-3" />
+              Featured
+            </motion.div>
+          )}
+          <RiskIndicator level={drop.riskLevel} />
         </div>
-      )}
-
-      {/* Featured badge */}
-      {drop.featured && (
-        <div className="absolute top-3 left-3">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="flex items-center gap-1 bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-2 py-1 rounded-full text-xs font-medium"
-          >
-            <Star className="w-3 h-3" />
-            Featured
-          </motion.div>
+        
+        <div className="flex gap-1">
+          {drop.trending && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="flex items-center gap-1 bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 py-1 rounded-full text-xs font-medium"
+            >
+              <Flame className="w-3 h-3" />
+            </motion.div>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="flex items-start justify-between gap-4 relative z-10">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
               {drop.project}
             </h3>
             {drop.verified && (
@@ -189,7 +219,7 @@ function DropCard({ drop, mode }: { drop: Drop; mode: 'upcoming' | 'live' | 'pas
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <BadgeCheck className="w-4 h-4 text-blue-500" />
               </motion.div>
             )}
             {drop.blueChip && (
@@ -198,85 +228,93 @@ function DropCard({ drop, mode }: { drop: Drop; mode: 'upcoming' | 'live' | 'pas
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                <Crown className="w-4 h-4 text-yellow-500" />
+                <Shield className="w-4 h-4 text-green-500" />
               </motion.div>
             )}
           </div>
           
-          <div className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-            by {drop.artist} • 
-            <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getCategoryColor(drop.category)} text-white`}>
-              {drop.category}
-            </span>
+          <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            by {drop.artist}
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <span className={`px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getCategoryColor(drop.category)} text-white`}>
+              {drop.category}
+            </span>
+            {drop.marketCap && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                MC: ${(drop.marketCap / 1000).toFixed(1)}K
+              </span>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-1">
                 <DollarSign className="w-4 h-4 text-green-500" />
                 <span className="font-semibold text-gray-900 dark:text-white">${drop.mintPriceUSD.toFixed(2)}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4 text-blue-500" />
-                <span className="text-gray-600 dark:text-gray-400">Supply: {drop.supply}</span>
+                <span className="text-gray-600 dark:text-gray-400">{drop.supply.toLocaleString()}</span>
               </div>
             </div>
 
             {mode === 'live' && (
-              <div className="w-full">
-                <ProgressBar minted={drop.minted} supply={drop.supply} />
-              </div>
+              <ProgressBar minted={drop.minted} supply={drop.supply} />
             )}
           </div>
         </div>
 
-        <div className="text-right">
+        <div className="text-right min-w-[120px]">
           <div className="flex items-center gap-1 justify-end text-xs text-gray-500 dark:text-gray-400 mb-1">
             <Clock className="w-3 h-3" />
             {timeLabel}
           </div>
           <div className={`text-sm font-semibold ${
-            mode === 'live' ? 'text-red-500 animate-pulse' : 
+            mode === 'live' ? 'text-red-500' : 
             mode === 'upcoming' ? 'text-blue-500' : 
             'text-gray-500'
           }`}>
-            {mode === 'past' ? (drop.floorAfter ? `$${drop.floorAfter} floor` : '—') : remaining}
+            {mode === 'past' ? (drop.floorAfter ? `$${drop.floorAfter}` : '—') : remaining}
           </div>
+
+          {drop.floorAfter && mode === 'past' && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Current floor
+            </div>
+          )}
 
           <div className="mt-4 flex flex-col items-end gap-2">
             {mode === 'upcoming' && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => alert(`Remind set for ${drop.project}`)}
-                className="px-4 py-2 text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg font-medium hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-200 dark:border-blue-800 flex items-center gap-2"
               >
                 <Calendar className="w-4 h-4" />
-                Notify Me
+                Notify
               </motion.button>
             )}
             {mode === 'live' && (
-              <>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => alert(`Minting ${drop.project}`)}
-                  className="px-4 py-2 text-sm bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-purple-300 flex items-center gap-2"
-                >
-                  <Zap className="w-4 h-4" />
-                  Mint Now
-                </motion.button>
-              </>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-4 py-2 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-500 hover:to-purple-500 transition-all duration-300 shadow-lg hover:shadow-blue-300/30 flex items-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                Mint Now
+              </motion.button>
             )}
             {mode === 'past' && (
               <Link href={`/marketplace/collections/${drop.id}`}>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 text-sm bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border border-gray-200 dark:border-gray-600 flex items-center gap-2"
                 >
                   <Eye className="w-4 h-4" />
-                  View Collection
+                  View
                 </motion.button>
               </Link>
             )}
@@ -287,71 +325,85 @@ function DropCard({ drop, mode }: { drop: Drop; mode: 'upcoming' | 'live' | 'pas
   );
 }
 
-// Enhanced mock data
+// Enhanced mock data with more professional projects
 const MOCK_DROPS: Drop[] = [
   { 
     id: 'd1', 
-    project: 'Neon Canvas', 
-    artist: 'A. Rivera', 
+    project: 'Digital Renaissance', 
+    artist: 'Alex Rivera Studios', 
     start: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), 
-    mintPriceUSD: 50, 
+    mintPriceUSD: 250, 
     supply: 1000, 
     minted: 120, 
     category: 'Art', 
     verified: true,
     trending: true,
-    featured: true
+    featured: true,
+    riskLevel: 'Low',
+    marketCap: 250000,
+    totalVolume: 120000
   },
   { 
     id: 'd2', 
-    project: 'SkyRift Exo Blade', 
-    artist: 'SkyRift Studio', 
+    project: 'SkyRift Genesis', 
+    artist: 'SkyRift Games', 
     start: new Date(Date.now() - 1000 * 60 * 60).toISOString(), 
     end: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(), 
-    mintPriceUSD: 12, 
-    supply: 500, 
-    minted: 320, 
+    mintPriceUSD: 89, 
+    supply: 5000, 
+    minted: 3200, 
     category: 'Gaming', 
-    trending: true
+    trending: true,
+    riskLevel: 'Medium',
+    marketCap: 445000,
+    totalVolume: 284800
   },
   { 
     id: 'd3', 
-    project: 'Aurora Beats Drop', 
-    artist: 'S. Vega', 
+    project: 'Harmonic Waves', 
+    artist: 'Studio Vega', 
     start: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), 
     end: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 + 1000 * 60 * 60).toISOString(), 
-    mintPriceUSD: 8, 
-    supply: 300, 
-    minted: 300, 
+    mintPriceUSD: 75, 
+    supply: 1000, 
+    minted: 1000, 
     category: 'Music', 
     verified: true, 
-    floorAfter: 18,
-    featured: true
+    floorAfter: 245,
+    featured: true,
+    riskLevel: 'Low',
+    marketCap: 245000,
+    totalVolume: 75000
   },
   { 
     id: 'd4', 
-    project: 'Legends Moment', 
-    artist: 'SportsX', 
+    project: 'Legends Collection', 
+    artist: 'SportsX Official', 
     start: new Date(Date.now() + 1000 * 60 * 30).toISOString(), 
-    mintPriceUSD: 5, 
-    supply: 100, 
+    mintPriceUSD: 199, 
+    supply: 500, 
     minted: 5, 
     category: 'Sports', 
-    blueChip: true 
+    blueChip: true,
+    riskLevel: 'Low',
+    marketCap: 99500
   },
   { 
     id: 'd5', 
-    project: 'Parcel A-12', 
-    artist: 'MetaWorld', 
+    project: 'Meta Estates', 
+    artist: 'Virtual Holdings', 
     start: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), 
     end: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(), 
-    mintPriceUSD: 300, 
-    supply: 10, 
-    minted: 10, 
+    mintPriceUSD: 1250, 
+    supply: 50, 
+    minted: 50, 
     category: 'VirtualWorld', 
     verified: true, 
-    floorAfter: 420,
-    blueChip: true
+    floorAfter: 4200,
+    blueChip: true,
+    riskLevel: 'High',
+    marketCap: 210000,
+    totalVolume: 62500
   },
 ];
 
@@ -363,6 +415,8 @@ export default function DropsPage() {
   const [endDate, setEndDate] = useState<string>('');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [blueChipOnly, setBlueChipOnly] = useState(false);
+  const [riskLevel, setRiskLevel] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'live' | 'upcoming' | 'past'>('all');
 
   const now = Date.now();
@@ -374,22 +428,48 @@ export default function DropsPage() {
       if (maxPrice !== '' && d.mintPriceUSD > Number(maxPrice)) return false;
       if (verifiedOnly && !d.verified) return false;
       if (blueChipOnly && !d.blueChip) return false;
+      if (riskLevel !== 'All' && d.riskLevel !== riskLevel) return false;
       if (startDate && new Date(d.start).getTime() < new Date(startDate).getTime()) return false;
       if (endDate && new Date(d.start).getTime() > new Date(endDate).getTime()) return false;
+      if (searchQuery && !d.project.toLowerCase().includes(searchQuery.toLowerCase()) && 
+          !d.artist.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;
     });
-  }, [category, minPrice, maxPrice, verifiedOnly, blueChipOnly, startDate, endDate]);
+  }, [category, minPrice, maxPrice, verifiedOnly, blueChipOnly, riskLevel, startDate, endDate, searchQuery]);
 
   const upcoming = filtered.filter(d => new Date(d.start).getTime() > now);
   const live = filtered.filter(d => new Date(d.start).getTime() <= now && (d.end ? new Date(d.end).getTime() > now : true));
   const past = filtered.filter(d => d.end ? new Date(d.end).getTime() < now : false);
 
   const stats: Stat[] = [
-    { label: '24h Volume', value: 'Ξ 120', icon: <TrendingUp className="w-4 h-4" />, change: '+12%' },
-    { label: '7d Volume', value: 'Ξ 980', icon: <BarChart3 className="w-4 h-4" />, change: '+24%' },
-    { label: '30d Volume', value: 'Ξ 3,420', icon: <Target className="w-4 h-4" />, change: '+18%' },
-    { label: 'Traders (24h)', value: '1,240', icon: <Users className="w-4 h-4" />, change: '+8%' },
-    { label: 'Avg Sale', value: '$75', icon: <DollarSign className="w-4 h-4" />, change: '+5%' },
+    { 
+      label: 'Market Volume', 
+      value: '$2.4M', 
+      icon: <TrendingUp className="w-4 h-4" />, 
+      change: '+12.4%',
+      description: '24h total volume'
+    },
+    { 
+      label: 'Active Drops', 
+      value: '24', 
+      icon: <Activity className="w-4 h-4" />, 
+      change: '+3',
+      description: 'Live collections'
+    },
+    { 
+      label: 'Avg. Price', 
+      value: '$185', 
+      icon: <DollarSign className="w-4 h-4" />, 
+      change: '+5.2%',
+      description: 'Mean mint price'
+    },
+    { 
+      label: 'Success Rate', 
+      value: '78%', 
+      icon: <PieChart className="w-4 h-4" />, 
+      change: '+8%',
+      description: 'Sold out collections'
+    },
   ];
 
   const getDisplayDrops = () => {
@@ -408,64 +488,125 @@ export default function DropsPage() {
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 text-center"
+          className="mb-12"
         >
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 mb-4"
-          >
-            <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-            <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
-              Live NFT Drops
-            </span>
-          </motion.div>
-          
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"
-          >
-            Discover NFT Drops
-          </motion.h1>
-          
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto"
-          >
-            Find upcoming, live and past drops. Filter by category, price, date and more to discover your next NFT gem.
-          </motion.p>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 mb-4"
+              >
+                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                  Professional NFT Marketplace
+                </span>
+              </motion.div>
+              
+              <motion.h1 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+              >
+                NFT Drops Dashboard
+              </motion.h1>
+              
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl"
+              >
+                Advanced analytics and discovery platform for professional NFT collectors and investors.
+              </motion.p>
+            </div>
+
+            {/* Search Bar */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+              className="relative lg:w-80"
+            >
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search projects, artists..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              />
+            </motion.div>
+          </div>
         </motion.header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left: Filters & Stats */}
+        {/* Market Stats */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+        >
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 + index * 0.1 }}
+              className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                  {stat.icon}
+                  <span className="text-sm font-medium">{stat.label}</span>
+                </div>
+                {stat.change && (
+                  <span className="text-sm font-medium text-green-500 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">
+                    {stat.change}
+                  </span>
+                )}
+              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                {stat.value}
+              </div>
+              {stat.description && (
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {stat.description}
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </motion.section>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Filters Sidebar */}
           <motion.aside
             initial="initial"
             animate="animate"
             variants={slideInLeft}
             className="lg:col-span-1 space-y-6"
           >
-            {/* Filters */}
+            {/* Filters Card */}
             <motion.div
               variants={scaleIn}
               className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm"
             >
-              <div className="flex items-center gap-2 mb-4">
-                <Filter className="w-5 h-5 text-purple-600" />
+              <div className="flex items-center gap-2 mb-6">
+                <Filter className="w-5 h-5 text-blue-600" />
                 <h3 className="font-semibold text-gray-900 dark:text-white">Filters</h3>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Category
+                  </label>
                   <select 
                     value={category} 
                     onChange={(e) => setCategory(e.target.value)} 
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option>All</option>
                     <option>Art</option>
@@ -478,61 +619,63 @@ export default function DropsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price Range ($)</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Risk Level
+                  </label>
+                  <select 
+                    value={riskLevel} 
+                    onChange={(e) => setRiskLevel(e.target.value)} 
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option>All</option>
+                    <option>Low</option>
+                    <option>Medium</option>
+                    <option>High</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Price Range (USD)
+                  </label>
                   <div className="flex gap-2">
                     <input 
                       placeholder="Min" 
                       type="number" 
                       value={minPrice} 
                       onChange={e => setMinPrice(e.target.value === '' ? '' : Number(e.target.value))} 
-                      className="w-1/2 p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-1/2 p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <input 
                       placeholder="Max" 
                       type="number" 
                       value={maxPrice} 
                       onChange={e => setMaxPrice(e.target.value === '' ? '' : Number(e.target.value))} 
-                      className="w-1/2 p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-1/2 p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date Range</label>
-                  <input 
-                    type="date" 
-                    value={startDate} 
-                    onChange={e => setStartDate(e.target.value)} 
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 mb-2"
-                  />
-                  <input 
-                    type="date" 
-                    value={endDate} 
-                    onChange={e => setEndDate(e.target.value)} 
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  />
-                </div>
-
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                     <input 
                       type="checkbox" 
                       checked={verifiedOnly} 
                       onChange={e => setVerifiedOnly(e.target.checked)} 
-                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    Verified artists only
+                    <BadgeCheck className="w-4 h-4 text-blue-500" />
+                    Verified projects only
                   </label>
                   <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                     <input 
                       type="checkbox" 
                       checked={blueChipOnly} 
                       onChange={e => setBlueChipOnly(e.target.checked)} 
-                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <Crown className="w-4 h-4 text-yellow-500" />
-                    Blue-chip projects
+                    <Shield className="w-4 h-4 text-green-500" />
+                    Blue-chip collections
                   </label>
                 </div>
 
@@ -547,63 +690,45 @@ export default function DropsPage() {
                     setEndDate(''); 
                     setVerifiedOnly(false); 
                     setBlueChipOnly(false); 
+                    setRiskLevel('All');
+                    setSearchQuery('');
                   }} 
-                  className="w-full p-3 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="w-full p-3 text-sm bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border border-gray-200 dark:border-gray-600"
                 >
-                  Reset filters
+                  Clear all filters
                 </motion.button>
               </div>
             </motion.div>
 
-            {/* Market Overview */}
+            {/* Market Insights */}
             <motion.div
               variants={scaleIn}
               className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm"
             >
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-5 h-5 text-green-500" />
-                <h3 className="font-semibold text-gray-900 dark:text-white">Market Overview</h3>
+              <div className="flex items-center gap-2 mb-6">
+                <BarChart3 className="w-5 h-5 text-green-500" />
+                <h3 className="font-semibold text-gray-900 dark:text-white">Market Insights</h3>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                {stats.map((stat, index) => (
-                  <motion.div
-                    key={stat.label}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      {stat.icon}
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</div>
-                    </div>
-                    <div className="font-semibold text-gray-900 dark:text-white">{stat.value}</div>
-                    {stat.change && (
-                      <div className="text-xs text-green-500 font-medium">{stat.change}</div>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
-                <div className="flex items-center gap-2 mb-3">
-                  <Wallet className="w-4 h-4 text-purple-500" />
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">Your Stats</h4>
+              <div className="space-y-4">
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm font-medium text-blue-900 dark:text-blue-100">Market Trend</span>
+                  </div>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    NFT volume up 24% this week. Art and Gaming sectors leading growth.
+                  </p>
                 </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Portfolio:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">$1,240</span>
+
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle className="w-4 h-4 text-amber-500" />
+                    <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Risk Advisory</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">NFTs owned:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">12</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Total spent:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">$2,200</span>
-                  </div>
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    High-risk drops show 68% failure rate. Consider verified projects.
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -619,12 +744,12 @@ export default function DropsPage() {
             {/* Tab Navigation */}
             <motion.div
               variants={fadeInUp}
-              className="bg-white dark:bg-gray-800 p-2 rounded-2xl border border-gray-200 dark:border-gray-700"
+              className="bg-white dark:bg-gray-800 p-2 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm"
             >
-              <div className="flex space-x-1">
+              <div className="flex flex-wrap gap-1">
                 {[
                   { id: 'all' as const, label: 'All Drops', count: filtered.length },
-                  { id: 'live' as const, label: 'Live Now', count: live.length, icon: <Flame className="w-4 h-4" /> },
+                  { id: 'live' as const, label: 'Live Minting', count: live.length, icon: <Flame className="w-4 h-4" /> },
                   { id: 'upcoming' as const, label: 'Upcoming', count: upcoming.length, icon: <Clock className="w-4 h-4" /> },
                   { id: 'past' as const, label: 'Past Drops', count: past.length, icon: <Calendar className="w-4 h-4" /> }
                 ].map((tab) => (
@@ -633,10 +758,10 @@ export default function DropsPage() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+                    className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
                       activeTab === tab.id
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     {tab.icon}
@@ -644,7 +769,7 @@ export default function DropsPage() {
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       activeTab === tab.id
                         ? 'bg-white/20 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                        : 'bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
                     }`}>
                       {tab.count}
                     </span>
@@ -688,64 +813,15 @@ export default function DropsPage() {
                   >
                     <Award className="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500 mb-4" />
                     <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
-                      No drops found
+                      No matching drops found
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-6">
-                      Try adjusting your filters to see more results
+                      Adjust your filters or search criteria to see more results
                     </p>
                   </motion.div>
                 )}
               </motion.div>
             </AnimatePresence>
-
-            {/* Additional Analytics */}
-            <motion.div
-              variants={fadeInUp}
-              className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <BarChart3 className="w-5 h-5 text-purple-600" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Collection Analytics</h3>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                {[
-                  { label: 'Floor Price (30d)', value: '$42', change: '+5%' },
-                  { label: 'Volume trend', value: '+12% (7d)', change: '↑' },
-                  { label: 'Holder distribution', value: 'Top 10 hold 24%', change: 'Stable' }
-                ].map((stat, index) => (
-                  <motion.div
-                    key={stat.label}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow"
-                  >
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{stat.label}</div>
-                    <div className="font-semibold text-gray-900 dark:text-white text-lg">{stat.value}</div>
-                    <div className={`text-xs font-medium ${
-                      stat.change.includes('+') || stat.change === '↑' ? 'text-green-500' : 'text-gray-500'
-                    }`}>
-                      {stat.change}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Wallet Insights</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <div className="text-gray-600 dark:text-gray-400">Gas fees spent:</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">Ξ 0.85</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-600 dark:text-gray-400">Minting activity:</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">5 mints this month</div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
           </motion.section>
         </div>
       </main>
