@@ -6,6 +6,7 @@ import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
 import { config } from './config/wagmi';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext'
+import { MarketplaceProvider } from '../contexts/MarketplaceContext'
 
 import '@rainbow-me/rainbowkit/styles.css';
 
@@ -31,7 +32,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <RainbowKitWithTheme>
-            {children}
+            <MarketplaceProvider>
+              {children}
+            </MarketplaceProvider>
           </RainbowKitWithTheme>
         </QueryClientProvider>
       </WagmiProvider>

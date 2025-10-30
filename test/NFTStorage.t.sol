@@ -18,14 +18,14 @@ contract NFTStorageTest is Test {
 
     function setUp() public {
         vm.prank(owner);
-        nftStorage = new NFTStorage(TOTAL_SUPPLY, NAME, SYMBOL);
+        nftStorage = new NFTStorage(TOTAL_SUPPLY, NAME, SYMBOL, "https://api.example.com/metadata/");
     }
 
     function testConstructor() public view {
         assertEq(nftStorage.name(), NAME);
         assertEq(nftStorage.symbol(), SYMBOL);
-        assertEq(nftStorage.i_totalSupply(), TOTAL_SUPPLY);
-        assertEq(nftStorage.tokenId(), 0);
+        assertEq(nftStorage.maxSupply(), TOTAL_SUPPLY);
+        assertEq(nftStorage.getTotalMinted(), 0);
         assertEq(nftStorage.owner(), owner);
     }
 
@@ -38,16 +38,16 @@ contract NFTStorageTest is Test {
 
         uint256 tokenId = nftStorage.mint(user1, tokenURI);
 
-        assertEq(tokenId, 0);
+        assertEq(tokenId, 1);
         assertEq(nftStorage.ownerOf(tokenId), user1);
         assertEq(nftStorage.tokenURI(tokenId), tokenURI);
-        assertEq(nftStorage.tokenId(), 1);
+        assertEq(nftStorage.getTotalMinted(), 1);
     }
 
     function testMintMultiple() public {
         vm.startPrank(owner);
 
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 1; i <= 5; i++) {
             string memory tokenURI = string(abi.encodePacked("ipfs://test-uri-", vm.toString(i)));
             uint256 tokenId = nftStorage.mint(user1, tokenURI);
 
@@ -56,7 +56,6 @@ contract NFTStorageTest is Test {
             assertEq(nftStorage.tokenURI(tokenId), tokenURI);
         }
 
-        assertEq(nftStorage.tokenId(), 5);
         assertEq(nftStorage.getTotalMinted(), 5);
 
         vm.stopPrank();
@@ -72,7 +71,7 @@ contract NFTStorageTest is Test {
         vm.startPrank(owner);
 
         // Mint up to max supply
-        for (uint256 i = 0; i < TOTAL_SUPPLY; i++) {
+        for (uint256 i = 1; i <= TOTAL_SUPPLY; i++) {
             nftStorage.mint(user1, string(abi.encodePacked("ipfs://", vm.toString(i))));
         }
 

@@ -19,161 +19,7 @@
   },
   {
     "type": "function",
-    "name": "acceptOffer",
-    "inputs": [
-      {
-        "name": "_listingId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_offerer",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "buyNFT",
-    "inputs": [
-      {
-        "name": "_listingId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "payable"
-  },
-  {
-    "type": "function",
-    "name": "cancelListing",
-    "inputs": [
-      {
-        "name": "_listingId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "cancelOffer",
-    "inputs": [
-      {
-        "name": "_listingId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "getListing",
-    "inputs": [
-      {
-        "name": "_listingId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "seller",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "nftContract",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "price",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "active",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getOffer",
-    "inputs": [
-      {
-        "name": "_listingId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_offerer",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "price",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "expiresAt",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "listNFT",
-    "inputs": [
-      {
-        "name": "_nftContract",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "_tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_price",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "listingCounter",
+    "name": "auctionCounter",
     "inputs": [],
     "outputs": [
       {
@@ -186,7 +32,7 @@
   },
   {
     "type": "function",
-    "name": "listings",
+    "name": "auctions",
     "inputs": [
       {
         "name": "",
@@ -211,12 +57,37 @@
         "internalType": "uint256"
       },
       {
-        "name": "price",
+        "name": "startPrice",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "highestBid",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "highestBidder",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "startTime",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "endTime",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
         "name": "active",
+        "type": "bool",
+        "internalType": "bool"
+      },
+      {
+        "name": "settled",
         "type": "bool",
         "internalType": "bool"
       }
@@ -225,25 +96,7 @@
   },
   {
     "type": "function",
-    "name": "makeOffer",
-    "inputs": [
-      {
-        "name": "_listingId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_duration",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "payable"
-  },
-  {
-    "type": "function",
-    "name": "offers",
+    "name": "bids",
     "inputs": [
       {
         "name": "",
@@ -258,12 +111,186 @@
     ],
     "outputs": [
       {
-        "name": "price",
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "cancelAuction",
+    "inputs": [
+      {
+        "name": "_auctionId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "createAuction",
+    "inputs": [
+      {
+        "name": "_nftContract",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_tokenId",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "expiresAt",
+        "name": "_startPrice",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_duration",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "emergencyWithdrawETH",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "emergencyWithdrawNFT",
+    "inputs": [
+      {
+        "name": "_nftContract",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "getAuction",
+    "inputs": [
+      {
+        "name": "_auctionId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "seller",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "nftContract",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "startPrice",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "highestBid",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "highestBidder",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "startTime",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "endTime",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "active",
+        "type": "bool",
+        "internalType": "bool"
+      },
+      {
+        "name": "settled",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getBid",
+    "inputs": [
+      {
+        "name": "_auctionId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_bidder",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getTimeLeft",
+    "inputs": [
+      {
+        "name": "_auctionId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -319,6 +346,19 @@
   },
   {
     "type": "function",
+    "name": "placeBid",
+    "inputs": [
+      {
+        "name": "_auctionId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
     "name": "platformFee",
     "inputs": [],
     "outputs": [
@@ -339,7 +379,20 @@
   },
   {
     "type": "function",
-    "name": "tokenListings",
+    "name": "settleAuction",
+    "inputs": [
+      {
+        "name": "_auctionId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "tokenAuctions",
     "inputs": [
       {
         "name": "",
@@ -388,11 +441,37 @@
     "stateMutability": "nonpayable"
   },
   {
-    "type": "event",
-    "name": "Listed",
+    "type": "function",
+    "name": "withdrawBid",
     "inputs": [
       {
-        "name": "listingId",
+        "name": "_auctionId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "AuctionCancelled",
+    "inputs": [
+      {
+        "name": "auctionId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "AuctionCreated",
+    "inputs": [
+      {
+        "name": "auctionId",
         "type": "uint256",
         "indexed": true,
         "internalType": "uint256"
@@ -416,7 +495,19 @@
         "internalType": "uint256"
       },
       {
-        "name": "price",
+        "name": "startPrice",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "startTime",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "endTime",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -426,54 +517,22 @@
   },
   {
     "type": "event",
-    "name": "ListingCancelled",
+    "name": "AuctionSettled",
     "inputs": [
       {
-        "name": "listingId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "ListingUpdated",
-    "inputs": [
-      {
-        "name": "listingId",
+        "name": "auctionId",
         "type": "uint256",
         "indexed": true,
         "internalType": "uint256"
       },
       {
-        "name": "newPrice",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "OfferAccepted",
-    "inputs": [
-      {
-        "name": "listingId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "offerer",
+        "name": "winner",
         "type": "address",
         "indexed": true,
         "internalType": "address"
       },
       {
-        "name": "price",
+        "name": "amount",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -483,47 +542,47 @@
   },
   {
     "type": "event",
-    "name": "OfferCancelled",
+    "name": "BidPlaced",
     "inputs": [
       {
-        "name": "listingId",
+        "name": "auctionId",
         "type": "uint256",
         "indexed": true,
         "internalType": "uint256"
       },
       {
-        "name": "offerer",
+        "name": "bidder",
         "type": "address",
         "indexed": true,
         "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
       }
     ],
     "anonymous": false
   },
   {
     "type": "event",
-    "name": "OfferMade",
+    "name": "BidWithdrawn",
     "inputs": [
       {
-        "name": "listingId",
+        "name": "auctionId",
         "type": "uint256",
         "indexed": true,
         "internalType": "uint256"
       },
       {
-        "name": "offerer",
+        "name": "bidder",
         "type": "address",
         "indexed": true,
         "internalType": "address"
       },
       {
-        "name": "price",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "expiresAt",
+        "name": "amount",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -556,37 +615,6 @@
     "inputs": [
       {
         "name": "newFee",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "Sale",
-    "inputs": [
-      {
-        "name": "listingId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "buyer",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "seller",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "price",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"

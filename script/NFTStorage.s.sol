@@ -12,7 +12,7 @@ contract NFTStorageScript is Script {
     function run() public {
         vm.startBroadcast();
 
-        counter = new NFTStorage(10, "My Kittied", "KITTY");
+        counter = new NFTStorage(10, "My Kittied", "KITTY", "https://api.example.com/metadata/");
 
         vm.stopBroadcast();
     }

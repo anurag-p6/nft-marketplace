@@ -283,7 +283,7 @@ export default function Home() {
                   Create NFT
                 </button>
               </Link>
-              <Link href="/explore">
+              <Link href="/marketplace">
                 <button className="px-8 py-4 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 flex items-center gap-2">
                   Explore Marketplace
                   <ArrowRight className="w-5 h-5" />
