@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Read(//home/anurag/nft-marketplace/**)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npm run dev)"
     ],
     "deny": [],
     "ask": []

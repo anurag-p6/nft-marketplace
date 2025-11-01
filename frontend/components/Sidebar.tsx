@@ -3,48 +3,54 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { Logo } from '../public/logo';
 
 interface SidebarItemProps {
   icon: React.ReactNode;
   label: string;
   href: string;
   active?: boolean;
+  isExpanded: boolean;
 }
 
-const SidebarItem = ({ icon, label, href, active }: SidebarItemProps) => (
+const SidebarItem = ({ icon, label, href, active, isExpanded }: SidebarItemProps) => (
   <Link
     href={href}
-    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
+    className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
       active
         ? 'bg-purple-50 text-purple-600 font-semibold'
         : 'text-gray-700 hover:bg-gray-100'
     }`}
+    title={!isExpanded ? label : undefined}
   >
-    <div className="w-4 h-4">{icon}</div>
-        <span className="text-sm">{label}</span>
+    <div className="w-5 h-5 flex-shrink-0">{icon}</div>
+    <span className={`whitespace-nowrap transition-all duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
+      {label}
+    </span>
   </Link>
-);
-  </Link>);
 );
 
 interface CategoryItemProps {
   label: string;
   href: string;
   active?: boolean;
+  isExpanded: boolean;
 }
 
-const CategoryItem = ({ label, href, active }: CategoryItemProps) => (
+const CategoryItem = ({ label, href, active, isExpanded }: CategoryItemProps) => (
   <Link
     href={href}
-    className={`block px-3 py-1.5 rounded-lg text-xs transition-all ${
+    className={`block px-3 py-2 rounded-lg text-sm transition-all ${
       active
         ? 'bg-purple-50 text-purple-600 font-medium'
         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
     }`}
+    title={!isExpanded ? label : undefined}
   >
-    {label}
+    <span className={`transition-all duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
+      {label}
+    </span>
   </Link>
-);
 );
 
 export default function Sidebar() {
@@ -86,11 +92,11 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 h-screen w-56 bg-white border-r border-gray-200 overflow-y-auto transition-transform duration-300 z-40 ${
+        className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 overflow-y-auto transition-transform duration-300 z-40 ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="p-4 pt-24 lg:pt-4">
+        <div className="p-6 pt-24 lg:pt-6">
           {/* Main Navigation */}
           <nav className="space-y-1 mb-8">
             <SidebarItem
@@ -136,8 +142,8 @@ export default function Sidebar() {
           </nav>
 
           {/* Browse Categories */}
-          <div className="mb-6">
-            <h3 className="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          <div className="mb-8">
+            <h3 className="px-4 mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Browse by Category
             </h3>
             <div className="space-y-1">

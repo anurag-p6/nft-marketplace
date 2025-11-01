@@ -3,7 +3,7 @@
 import { useAccount, useBalance, useEnsName } from 'wagmi';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import Header from '../components/Header';
+import Header from '../../components/Header';
 import NFTCard from '@/components/NFTCard';
 import { getUserNFTs, NFTData } from '@/utils/fetchNFTs';
 
