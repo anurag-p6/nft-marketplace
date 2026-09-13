@@ -19,3 +19,5 @@ List, buy, and auction NFTs. Contracts in Foundry. App in Next.js.
 
 ```bash
 cd frontend && npm i && npm run dev
+
+
